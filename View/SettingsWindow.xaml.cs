@@ -23,17 +23,37 @@ namespace SMW_Data.View
         public bool SettingsOK { get; set; }
         public System.Windows.Media.Brush ChangeBackgroundColor { get; set; }
         public System.Windows.Media.Brush ChangeTextColor { get; set; }
+        public System.Windows.Media.Brush NewBackgroundColor;
+        public System.Windows.Media.Brush NewTextColor;
+        private MainWindow mainWindow;
 
-        private System.Windows.Media.Brush NewBackgroundColor;
-        private System.Windows.Media.Brush NewTextColor;
-
-
-        public SettingsWindow(Window parentWindow)
+        public SettingsWindow(MainWindow main)
         {
-            Owner = parentWindow;
+            Owner = main;
+            mainWindow = main;
             InitializeComponent();
-            //Change both Buttons to current color
-            //Change both text boxes to current HEX
+
+            // Pull in current Background Color
+            System.Windows.Media.SolidColorBrush MainBackgroundColor = mainWindow.CurrentBackgroundColor;
+            System.Windows.Media.Color color1 = MainBackgroundColor.Color;
+            string CurrentBackgroundHexColor = ColorToHexString2(color1);
+            TextBoxBackgroundColor.Text = CurrentBackgroundHexColor;
+            
+            //Change Background Color Button to current color
+            System.Windows.Media.Brush hexColorBrush1 = new SolidColorBrush(color1);
+            ButtonBackgroundColor.Background = hexColorBrush1;
+            NewBackgroundColor = hexColorBrush1;
+
+            // Pull in current Text Color
+            System.Windows.Media.SolidColorBrush MainTextColor = mainWindow.CurrentTextColor;
+            System.Windows.Media.Color color2 = MainTextColor.Color;
+            string CurrentTextHexColor = ColorToHexString2(color2);
+            TextBoxTextColor.Text = CurrentTextHexColor;
+
+            //Change Text Color Button to current color
+            System.Windows.Media.Brush hexColorBrush2 = new SolidColorBrush(System.Windows.Media.Color.FromArgb(color2.A, color2.R, color2.G, color2.B));
+            ButtonTextColor.Background = hexColorBrush2;
+            NewTextColor = hexColorBrush2;
         }
 
         private void ButtonOK_Click(object sender, RoutedEventArgs e)
@@ -47,6 +67,11 @@ namespace SMW_Data.View
         private void ButtonCancel_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        private static string ColorToHexString2(System.Windows.Media.Color c)
+        {
+            return "#" + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
         }
 
         private static string ColorToHexString(System.Drawing.Color c)
@@ -86,30 +111,38 @@ namespace SMW_Data.View
             }
         }
 
-        private void TextBoxBackgroundColor_TextChanged(object sender, TextChangedEventArgs e)
+        private void TextBoxBackgroundColor_LostFocus(object sender, RoutedEventArgs e)
         {
+            string backgroundColor = TextBoxBackgroundColor.Text;
+            string backgroundColorA = "FF";
+            string backgroundColorR = backgroundColor.Substring(1, 2);
+            string backgroundColorG = backgroundColor.Substring(3, 2);
+            string backgroundColorB = backgroundColor.Substring(5, 2);
 
-        string backgroundColor = TextBoxBackgroundColor.Text;
-        string backgroundColorA = "FF";
-        string backgroundColorR = backgroundColor.Substring(1, 2);
-        string backgroundColorG = backgroundColor.Substring(3, 2);
-        string backgroundColorB = backgroundColor.Substring(5, 2);
+            byte backgroundByteA = byte.Parse(backgroundColorA, System.Globalization.NumberStyles.HexNumber);
+            byte backgroundByteR = byte.Parse(backgroundColorR, System.Globalization.NumberStyles.HexNumber);
+            byte backgroundByteG = byte.Parse(backgroundColorG, System.Globalization.NumberStyles.HexNumber);
+            byte backgroundByteB = byte.Parse(backgroundColorB, System.Globalization.NumberStyles.HexNumber);
 
-        byte backgroundByteA = byte.Parse(backgroundColorA, System.Globalization.NumberStyles.HexNumber);
-        byte backgroundByteR = byte.Parse(backgroundColorR, System.Globalization.NumberStyles.HexNumber);
-        byte backgroundByteG = byte.Parse(backgroundColorG, System.Globalization.NumberStyles.HexNumber);
-        byte backgroundByteB = byte.Parse(backgroundColorB, System.Globalization.NumberStyles.HexNumber);
+            System.Windows.Media.Color color = System.Windows.Media.Color.FromArgb(backgroundByteA, backgroundByteR, backgroundByteG, backgroundByteB);
+            System.Windows.Media.Brush backgroundBrush = new SolidColorBrush(color);
 
-        System.Windows.Media.Color color = System.Windows.Media.Color.FromArgb(backgroundByteA, backgroundByteR, backgroundByteG, backgroundByteB);
-        System.Windows.Media.Brush backgroundBrush = new SolidColorBrush(color);
-        ButtonBackgroundColor.Background = backgroundBrush;
-        NewBackgroundColor = backgroundBrush;
-        //Crashes if not a string that works
+            try
+            {
+                ButtonBackgroundColor.Background = backgroundBrush;
+                NewBackgroundColor = backgroundBrush;
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"An error occurred: {ex.Message}");
+                //Crashes if not a string that works
+            }
+
 
 
         }
 
-        private void TextBoxTextColor_TextChanged(object sender, TextChangedEventArgs e)
+        private void TextBoxTextColor_LostFocus(object sender, RoutedEventArgs e)
         {
 
         string textColor = TextBoxTextColor.Text;
@@ -128,6 +161,11 @@ namespace SMW_Data.View
         ButtonTextColor.Background = textBrush;
         NewTextColor = textBrush;
             //Crashes if not a string that works (need to limit to 6 characters and 000000 to FFFFFF... 0 to 16777215)
+        }
+
+        private void TextBoxBackgroundColor_LostFocus_1(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

@@ -13,7 +13,7 @@
         <Button x:Name="ButtonCancel" Content="Cancel" HorizontalAlignment="Left" Margin="136,83,0,0" VerticalAlignment="Top" Width="65" FontWeight="Bold" Click="ButtonCancel_Click"/>
         <Button x:Name="ButtonBackgroundColor" Content="" HorizontalAlignment="Left" Margin="125,15,0,0" VerticalAlignment="Top" Height="15" Width="15" Click="ButtonBackgroundColor_Click"/>
         <Button x:Name="ButtonTextColor" Content="" HorizontalAlignment="Left" Margin="125,46,0,0" VerticalAlignment="Top" Height="15" Width="15" Click="ButtonTextColor_Click"/>
-        <TextBox x:Name="TextBoxBackgroundColor" HorizontalAlignment="Left" Margin="145,15,0,0" Text="#2A2A2A" VerticalAlignment="Top" Width="60" Height="15" FontSize="10" TextChanged="TextBoxBackgroundColor_TextChanged"/>
-        <TextBox x:Name="TextBoxTextColor" HorizontalAlignment="Left" Margin="145,46,0,0" Text="#FFFFFF" VerticalAlignment="Top" Width="60" Height="15" FontSize="10" TextChanged="TextBoxTextColor_TextChanged"/>
+        <TextBox x:Name="TextBoxBackgroundColor" HorizontalAlignment="Left" Margin="145,15,0,0" VerticalAlignment="Top" Width="60" Height="15" FontSize="10" LostFocus="TextBoxBackgroundColor_LostFocus"/>
+        <TextBox x:Name="TextBoxTextColor" HorizontalAlignment="Left" Margin="145,46,0,0" VerticalAlignment="Top" Width="60" Height="15" FontSize="10" LostFocus="TextBoxTextColor_LostFocus"/>
     </Grid>
 </Window>

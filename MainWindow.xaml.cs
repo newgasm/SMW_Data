@@ -18,9 +18,14 @@ namespace SMW_Data
 {
     public partial class MainWindow : Window
     {
+        public SolidColorBrush CurrentBackgroundColor { get; set; }
+        public SolidColorBrush CurrentTextColor { get; set; }
+
         public MainWindow()
         {
             InitializeComponent();
+            CurrentBackgroundColor = (SolidColorBrush)GridMain.Background;
+            CurrentTextColor = (SolidColorBrush)Label_LevelDeathCount.Foreground;
         }
 
         private void CounterRange()
@@ -56,6 +61,8 @@ namespace SMW_Data
                 Label_TotalDeathCount.Foreground = settingsWindow.ChangeTextColor;
                 TextBlock_LevelDeathCount.Foreground = settingsWindow.ChangeTextColor;
                 TextBlock_TotalDeathCount.Foreground = settingsWindow.ChangeTextColor;
+                CurrentBackgroundColor = (SolidColorBrush)settingsWindow.NewBackgroundColor;
+                CurrentTextColor = (SolidColorBrush)settingsWindow.NewTextColor;
             }
         }
 
