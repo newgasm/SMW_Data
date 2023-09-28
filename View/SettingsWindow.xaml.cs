@@ -25,7 +25,7 @@ namespace SMW_Data.View
         public System.Windows.Media.Brush ChangeTextColor { get; set; }
         public System.Windows.Media.Brush NewBackgroundColor;
         public System.Windows.Media.Brush NewTextColor;
-        private MainWindow mainWindow;
+        private readonly MainWindow mainWindow;
 
         public SettingsWindow(MainWindow main)
         {
@@ -78,6 +78,10 @@ namespace SMW_Data.View
         {
             return "#" + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
         }
+        private bool IsValidHexColor(string color)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(color, @"^#[0-9A-Fa-f]{6}$");
+        }
 
         private void ButtonBackgroundColor_Click(object sender, RoutedEventArgs e)
         {
@@ -113,59 +117,59 @@ namespace SMW_Data.View
 
         private void TextBoxBackgroundColor_LostFocus(object sender, RoutedEventArgs e)
         {
-            string backgroundColor = TextBoxBackgroundColor.Text;
-            string backgroundColorA = "FF";
-            string backgroundColorR = backgroundColor.Substring(1, 2);
-            string backgroundColorG = backgroundColor.Substring(3, 2);
-            string backgroundColorB = backgroundColor.Substring(5, 2);
+            string backgroundColor = TextBoxBackgroundColor.Text.Trim();
 
-            byte backgroundByteA = byte.Parse(backgroundColorA, System.Globalization.NumberStyles.HexNumber);
-            byte backgroundByteR = byte.Parse(backgroundColorR, System.Globalization.NumberStyles.HexNumber);
-            byte backgroundByteG = byte.Parse(backgroundColorG, System.Globalization.NumberStyles.HexNumber);
-            byte backgroundByteB = byte.Parse(backgroundColorB, System.Globalization.NumberStyles.HexNumber);
-
-            System.Windows.Media.Color color = System.Windows.Media.Color.FromArgb(backgroundByteA, backgroundByteR, backgroundByteG, backgroundByteB);
-            System.Windows.Media.Brush backgroundBrush = new SolidColorBrush(color);
-
-            try
+            if (IsValidHexColor(backgroundColor))
             {
+                string backgroundColorA = "FF";
+                string backgroundColorR = backgroundColor.Substring(1, 2);
+                string backgroundColorG = backgroundColor.Substring(3, 2);
+                string backgroundColorB = backgroundColor.Substring(5, 2);
+
+                byte backgroundByteA = byte.Parse(backgroundColorA, System.Globalization.NumberStyles.HexNumber);
+                byte backgroundByteR = byte.Parse(backgroundColorR, System.Globalization.NumberStyles.HexNumber);
+                byte backgroundByteG = byte.Parse(backgroundColorG, System.Globalization.NumberStyles.HexNumber);
+                byte backgroundByteB = byte.Parse(backgroundColorB, System.Globalization.NumberStyles.HexNumber);
+
+                System.Windows.Media.Color color = System.Windows.Media.Color.FromArgb(backgroundByteA, backgroundByteR, backgroundByteG, backgroundByteB);
+                System.Windows.Media.Brush backgroundBrush = new SolidColorBrush(color);
+
                 ButtonBackgroundColor.Background = backgroundBrush;
                 NewBackgroundColor = backgroundBrush;
             }
-            catch (Exception ex)
+            else
             {
-                System.Windows.MessageBox.Show($"An error occurred: {ex.Message}");
-                //Crashes if not a string that works
+                System.Windows.MessageBox.Show("Invalid color format. Please use #RRGGBB format.");
             }
-
-
-
         }
 
         private void TextBoxTextColor_LostFocus(object sender, RoutedEventArgs e)
         {
 
-        string textColor = TextBoxTextColor.Text;
-        string textColorA = "FF";
-        string textColorR = textColor.Substring(1, 2);
-        string textColorG = textColor.Substring(3, 2);
-        string textColorB = textColor.Substring(5, 2);
+            string textColor = TextBoxTextColor.Text.Trim();
 
-        byte textByteA = byte.Parse(textColorA, System.Globalization.NumberStyles.HexNumber);
-        byte textByteR = byte.Parse(textColorR, System.Globalization.NumberStyles.HexNumber);
-        byte textByteG = byte.Parse(textColorG, System.Globalization.NumberStyles.HexNumber);
-        byte textByteB = byte.Parse(textColorB, System.Globalization.NumberStyles.HexNumber);
+            if (IsValidHexColor(textColor))
+            {
+                string textColorA = "FF";
+                string textColorR = textColor.Substring(1, 2);
+                string textColorG = textColor.Substring(3, 2);
+                string textColorB = textColor.Substring(5, 2);
 
-        System.Windows.Media.Color color1 = System.Windows.Media.Color.FromArgb(textByteA, textByteR, textByteG, textByteB);
-        System.Windows.Media.Brush textBrush = new SolidColorBrush(color1);
-        ButtonTextColor.Background = textBrush;
-        NewTextColor = textBrush;
-            //Crashes if not a string that works (need to limit to 6 characters and 000000 to FFFFFF... 0 to 16777215)
-        }
+                byte textByteA = byte.Parse(textColorA, System.Globalization.NumberStyles.HexNumber);
+                byte textByteR = byte.Parse(textColorR, System.Globalization.NumberStyles.HexNumber);
+                byte textByteG = byte.Parse(textColorG, System.Globalization.NumberStyles.HexNumber);
+                byte textByteB = byte.Parse(textColorB, System.Globalization.NumberStyles.HexNumber);
 
-        private void TextBoxBackgroundColor_LostFocus_1(object sender, RoutedEventArgs e)
-        {
-
+                System.Windows.Media.Color color1 = System.Windows.Media.Color.FromArgb(textByteA, textByteR, textByteG, textByteB);
+                System.Windows.Media.Brush textBrush = new SolidColorBrush(color1);
+                
+                ButtonTextColor.Background = textBrush;
+                NewTextColor = textBrush;
+            }
+            else
+            {
+                System.Windows.MessageBox.Show("Invalid color format. Please use #RRGGBB format.");
+            }
         }
     }
 }
