@@ -1,19 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Forms;
-using System.Windows.Input;
+﻿using System.Windows;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using WinForms = System.Windows.Forms;
 
 namespace SMW_Data.View
@@ -32,6 +18,10 @@ namespace SMW_Data.View
             Owner = main;
             mainWindow = main;
             InitializeComponent();
+
+            // Initialize colors
+            ChangeBackgroundColor = System.Windows.Media.Brushes.White;
+            ChangeTextColor = System.Windows.Media.Brushes.White;
 
             // Pull in current Background Color
             System.Windows.Media.SolidColorBrush MainBackgroundColor = mainWindow.CurrentBackgroundColor;
@@ -78,7 +68,7 @@ namespace SMW_Data.View
         {
             return "#" + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
         }
-        private bool IsValidHexColor(string color)
+        private static bool IsValidHexColor(string color)
         {
             return System.Text.RegularExpressions.Regex.IsMatch(color, @"^#[0-9A-Fa-f]{6}$");
         }

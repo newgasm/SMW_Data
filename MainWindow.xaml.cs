@@ -1,18 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Diagnostics;
 using SMW_Data.View;
+using WebSocketSharp;
+using Newtonsoft.Json;
 
 namespace SMW_Data
 {
@@ -21,11 +14,168 @@ namespace SMW_Data
         public SolidColorBrush CurrentBackgroundColor { get; set; }
         public SolidColorBrush CurrentTextColor { get; set; }
 
+        private static int TotalDeathCount;
+        private static int LevelDeathCount;
+
+        static WebSocket ws;
+
+        public string MemoryAddressValue_DeathCheck;
+        static readonly int MemoryAddress_DeathCheck = 0x7E0071;
+        static readonly int adjMemoryAddress_DeathCheck = 0xF50000 + (MemoryAddress_DeathCheck - 0x7E0000);
+        static readonly string AdjustedMemoryAddress_DeathCheck = adjMemoryAddress_DeathCheck.ToString("X");
+
+        public string MemoryAddressValue_KeyExit;
+        static readonly int MemoryAddress_KeyExit = 0x7E1435;
+        static readonly int adjMemoryAddress_KeyExit = 0xF50000 + (MemoryAddress_KeyExit - 0x7E0000);
+        static readonly string AdjustedMemoryAddress_KeyExit = adjMemoryAddress_KeyExit.ToString("X");
+
+        public string MemoryAddressValue_OtherExits;
+        static readonly int MemoryAddress_OtherExits = 0x7E1493;
+        static readonly int adjMemoryAddress_OtherExits = 0xF50000 + (MemoryAddress_OtherExits - 0x7E0000);
+        static readonly string AdjustedMemoryAddress_OtherExits = adjMemoryAddress_OtherExits.ToString("X");
+
+        public bool DeathState;
+
+        static int messageCount = 0;
+
         public MainWindow()
         {
             InitializeComponent();
             CurrentBackgroundColor = (SolidColorBrush)GridMain.Background;
             CurrentTextColor = (SolidColorBrush)Label_LevelDeathCount.Foreground;
+            InitializeWebSocket();
+        }
+
+        private void InitializeWebSocket()
+        {
+            ws = new WebSocket("ws://localhost:8080");
+
+            ws.OnOpen += (sender, e) =>
+            {
+                //MessageBox.Show("WebSocket connected");
+
+                var deviceListRequest = new
+                {
+                    Opcode = "DeviceList",
+                    Space = "SNES"
+                };
+                ws.Send(JsonConvert.SerializeObject(deviceListRequest));
+
+                var attachRequest = new
+                {
+                    Opcode = "Attach",
+                    Space = "SNES",
+                    Operands = new[] { "SD2SNES COM3" }
+                };
+                ws.Send(JsonConvert.SerializeObject(attachRequest));
+
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+
+                var timer = new Timer(state =>
+                {
+                    SendGetAddressRequest(ws, AdjustedMemoryAddress_DeathCheck);
+                    //SendGetAddressRequest(ws, AdjustedMemoryAddress_KeyExit);
+                    //SendGetAddressRequest(ws, AdjustedMemoryAddress_OtherExits);
+                }, null, 0, 100); // 16 milliseconds = 60 frames per second, but stops working after 1-2 deaths at a low value here
+            };
+
+            ws.OnMessage += (sender, e) =>
+            {
+                messageCount++;
+                if (messageCount == 2)
+                {
+                    ProcessMemoryAddressResponse_DeathCheck(e.RawData);
+                    //ProcessMemoryAddressResponse_KeyExit(e.RawData);
+                    //ProcessMemoryAddressResponse_OtherExits(e.RawData);
+                    messageCount = 0;
+                }
+            };
+
+            ws.OnError += (sender, e) =>
+            {
+                //MessageBox.Show("WebSocket error: " + e.Message);
+            };
+
+            ws.OnClose += (sender, e) =>
+            {
+                if (e.Code == (ushort)CloseStatusCode.Normal)
+                {
+                    //MessageBox.Show("WebSocket closed normally.");
+                }
+                else
+                {
+                    //MessageBox.Show($"WebSocket closed with code {e.Code}: {e.Reason}");
+                }
+            };
+
+            ws.Connect();
+        }
+
+        private static void SendGetAddressRequest(WebSocket ws, string memoryAddress)
+        {
+            var getAddressRequest = new
+            {
+                Opcode = "GetAddress",
+                Space = "SNES",
+                Operands = new[] { memoryAddress, "1" }
+            };
+            ws.Send(JsonConvert.SerializeObject(getAddressRequest));
+        }
+
+        private void ProcessMemoryAddressResponse_DeathCheck(byte[] rawData)
+        {
+            string MemoryAddressValue_DeathCheck = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
+            if ((MemoryAddressValue_DeathCheck != "09") && (DeathState == true))
+            {
+                DeathState = false;
+            }
+
+            if ((MemoryAddressValue_DeathCheck == "09") && (DeathState == false))
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
+                    LevelDeathCount++;
+                    TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
+
+                    TotalDeathCount = Int32.Parse(TextBlock_TotalDeathCount.Text);
+                    TotalDeathCount++;
+                    TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
+                    CounterRange();
+                });
+                DeathState = true;
+            }
+        }
+
+        private void ProcessMemoryAddressResponse_KeyExit(byte[] rawData)
+        {
+            string MemoryAddressValue_KeyExit = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
+            if (MemoryAddressValue_KeyExit != "00")
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
+                    LevelDeathCount = 0;
+                    TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
+                    CounterRange();
+                });
+            }
+        }
+
+        private void ProcessMemoryAddressResponse_OtherExits(byte[] rawData)
+        {
+            string MemoryAddressValue_OtherExits = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
+            if (MemoryAddressValue_OtherExits != "00")
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
+                    LevelDeathCount = 0;
+                    TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
+                    CounterRange();
+                });
+            }
         }
 
         private void CounterRange()
@@ -52,7 +202,6 @@ namespace SMW_Data
         private void MenuItem_Click_Settings(object sender, RoutedEventArgs e)
         {
             SettingsWindow settingsWindow = new(this);
-            //put something here to pull in current colors?
             settingsWindow.ShowDialog();
             if (settingsWindow.SettingsOK)
             {
@@ -83,7 +232,6 @@ namespace SMW_Data
 
         private void Button_AddLevelDeaths_Click(object sender, RoutedEventArgs e)
         {
-            int LevelDeathCount;
             LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
             LevelDeathCount += Int32.Parse(TextBox_AddLevelDeaths.Text);
             TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
@@ -92,7 +240,6 @@ namespace SMW_Data
 
         private void Button_AddTotalDeaths_Click(object sender, RoutedEventArgs e)
         {
-            int TotalDeathCount;
             TotalDeathCount = Int32.Parse(TextBlock_TotalDeathCount.Text);
             TotalDeathCount += Int32.Parse(TextBox_AddTotalDeaths.Text);
             TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
@@ -101,7 +248,6 @@ namespace SMW_Data
 
         private void ButtonLevelPlus_Click(object sender, RoutedEventArgs e)
         {
-            int LevelDeathCount;
             LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
             LevelDeathCount++;
             TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
@@ -110,7 +256,6 @@ namespace SMW_Data
 
         private void ButtonLevelMinus_Click(object sender, RoutedEventArgs e)
         {
-            int LevelDeathCount;
             LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
             LevelDeathCount--;
             TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
@@ -119,7 +264,6 @@ namespace SMW_Data
 
         private void ButtonTotalPlus_Click(object sender, RoutedEventArgs e)
         {
-            int TotalDeathCount;
             TotalDeathCount = Int32.Parse(TextBlock_TotalDeathCount.Text);
             TotalDeathCount++;
             TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
@@ -128,7 +272,6 @@ namespace SMW_Data
 
         private void ButtonTotalMinus_Click(object sender, RoutedEventArgs e)
         {
-            int TotalDeathCount;
             TotalDeathCount = Int32.Parse(TextBlock_TotalDeathCount.Text);
             TotalDeathCount--;
             TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
