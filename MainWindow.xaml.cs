@@ -2,10 +2,13 @@
 using System.Threading;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Threading;
 using System.Diagnostics;
 using SMW_Data.View;
 using WebSocketSharp;
 using Newtonsoft.Json;
+using System.Windows.Media.Animation;
+using System.Collections.Generic;
 
 namespace SMW_Data
 {
@@ -17,6 +20,8 @@ namespace SMW_Data
         private static int TotalDeathCount;
         private static int LevelDeathCount;
 
+        private DispatcherTimer timer;
+        int elapsedMilliseconds = 0;
         static WebSocket ws;
 
         public string MemoryAddressValue_DeathCheck;
@@ -35,7 +40,7 @@ namespace SMW_Data
         static readonly string AdjustedMemoryAddress_OtherExits = adjMemoryAddress_OtherExits.ToString("X");
 
         public bool DeathState;
-
+        public string requestType;
         static int messageCount = 0;
 
         public MainWindow()
@@ -69,15 +74,10 @@ namespace SMW_Data
                 };
                 ws.Send(JsonConvert.SerializeObject(attachRequest));
 
-                var stopwatch = new Stopwatch();
-                stopwatch.Start();
-
-                var timer = new Timer(state =>
-                {
-                    SendGetAddressRequest(ws, AdjustedMemoryAddress_DeathCheck);
-                    //SendGetAddressRequest(ws, AdjustedMemoryAddress_KeyExit);
-                    //SendGetAddressRequest(ws, AdjustedMemoryAddress_OtherExits);
-                }, null, 0, 100); // 16 milliseconds = 60 frames per second, but stops working after 1-2 deaths at a low value here
+                timer = new DispatcherTimer();
+                timer.Interval = TimeSpan.FromMilliseconds(16); // 16ms is approximately 60fps (checking each address once every 3 frames)
+                timer.Tick += Timer_Tick;
+                timer.Start();
             };
 
             ws.OnMessage += (sender, e) =>
@@ -85,31 +85,61 @@ namespace SMW_Data
                 messageCount++;
                 if (messageCount == 2)
                 {
-                    ProcessMemoryAddressResponse_DeathCheck(e.RawData);
-                    //ProcessMemoryAddressResponse_KeyExit(e.RawData);
-                    //ProcessMemoryAddressResponse_OtherExits(e.RawData);
+                        if (requestType == "DeathCheck")
+                        {
+                            ProcessMemoryAddressResponse_DeathCheck(e.RawData);
+                        }
+                        else if (requestType == "KeyExit")
+                        {
+                            ProcessMemoryAddressResponse_KeyExit(e.RawData);
+                        }
+                        else if (requestType == "OtherExits")
+                        {
+                            ProcessMemoryAddressResponse_OtherExits(e.RawData);
+                        }
                     messageCount = 0;
                 }
             };
 
             ws.OnError += (sender, e) =>
-            {
-                //MessageBox.Show("WebSocket error: " + e.Message);
-            };
-
-            ws.OnClose += (sender, e) =>
-            {
-                if (e.Code == (ushort)CloseStatusCode.Normal)
                 {
-                    //MessageBox.Show("WebSocket closed normally.");
-                }
-                else
-                {
-                    //MessageBox.Show($"WebSocket closed with code {e.Code}: {e.Reason}");
-                }
-            };
+                    //MessageBox.Show("WebSocket error: " + e.Message);
+                };
 
+                ws.OnClose += (sender, e) =>
+                {
+                    if (e.Code == (ushort)CloseStatusCode.Normal)
+                    {
+                        //MessageBox.Show("WebSocket closed normally.");
+                    }
+                    else
+                    {
+                        //MessageBox.Show($"WebSocket closed with code {e.Code}: {e.Reason}");
+                    }
+                };
             ws.Connect();
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            elapsedMilliseconds += 16; // Increment by the timer interval
+
+            if (elapsedMilliseconds == 16)
+            {
+                requestType = "DeathCheck";
+                SendGetAddressRequest(ws, AdjustedMemoryAddress_DeathCheck);
+            }
+            else if (elapsedMilliseconds == 32)
+            {
+                requestType = "KeyExit";
+                SendGetAddressRequest(ws, AdjustedMemoryAddress_KeyExit);
+            }
+            else if (elapsedMilliseconds == 48)
+            {
+                requestType = "OtherExits";
+                SendGetAddressRequest(ws, AdjustedMemoryAddress_OtherExits);
+                elapsedMilliseconds = 0;
+            }
         }
 
         private static void SendGetAddressRequest(WebSocket ws, string memoryAddress)
@@ -118,12 +148,12 @@ namespace SMW_Data
             {
                 Opcode = "GetAddress",
                 Space = "SNES",
-                Operands = new[] { memoryAddress, "1" }
+                Operands = new[] { memoryAddress, "1" },
             };
             ws.Send(JsonConvert.SerializeObject(getAddressRequest));
         }
 
-        private void ProcessMemoryAddressResponse_DeathCheck(byte[] rawData)
+            private void ProcessMemoryAddressResponse_DeathCheck(byte[] rawData)
         {
             string MemoryAddressValue_DeathCheck = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
             if ((MemoryAddressValue_DeathCheck != "09") && (DeathState == true))
@@ -151,7 +181,7 @@ namespace SMW_Data
         private void ProcessMemoryAddressResponse_KeyExit(byte[] rawData)
         {
             string MemoryAddressValue_KeyExit = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
-            if (MemoryAddressValue_KeyExit != "00")
+            if (MemoryAddressValue_KeyExit != "00" && (DeathState == false))
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
@@ -166,7 +196,7 @@ namespace SMW_Data
         private void ProcessMemoryAddressResponse_OtherExits(byte[] rawData)
         {
             string MemoryAddressValue_OtherExits = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
-            if (MemoryAddressValue_OtherExits != "00")
+            if (MemoryAddressValue_OtherExits != "00" && (DeathState == false))
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
