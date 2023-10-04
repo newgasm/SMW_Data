@@ -16,6 +16,7 @@ namespace SMW_Data
 
         private static int TotalDeathCount;
         private static int LevelDeathCount;
+        public bool DeathState;
 
         static WebSocket ws;
         private DispatcherTimer timer;
@@ -34,10 +35,6 @@ namespace SMW_Data
         static readonly int MemoryAddress_OtherExits = 0x7E1493;
         static readonly int adjMemoryAddress_OtherExits = 0xF50000 + (MemoryAddress_OtherExits - 0x7E0000);
         static readonly string AdjustedMemoryAddress_OtherExits = adjMemoryAddress_OtherExits.ToString("X");
-
-        public bool DeathState;
-        public string requestType;
-        static int messageCount = 0;
 
         public MainWindow()
         {
@@ -79,14 +76,10 @@ namespace SMW_Data
 
             ws.OnMessage += (sender, e) =>
             {
-                messageCount++;
-                if (messageCount == 2)
-                {
-                    ProcessMemoryAddressResponse_DeathCheck(e.RawData);
-                    ProcessMemoryAddressResponse_KeyExit(e.RawData);
-                    ProcessMemoryAddressResponse_OtherExits(e.RawData);
-                    messageCount = 0;
-                }
+                ProcessMemoryAddressResponse_DeathCheck(e.RawData);
+                ProcessMemoryAddressResponse_KeyExit(e.RawData);
+                ProcessMemoryAddressResponse_OtherExits(e.RawData);
+
             };
 
             ws.OnError += (sender, e) =>
@@ -296,5 +289,3 @@ namespace SMW_Data
         }
     }
 }
-
-// Need to force postive integers only in the text box for adding lives
