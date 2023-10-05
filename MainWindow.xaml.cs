@@ -127,7 +127,7 @@ namespace SMW_Data
 
                 if ((MemoryAddressValue_DeathCheck == "09") && (DeathState == false))
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                     {
                         LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
                         LevelDeathCount++;
@@ -137,8 +137,8 @@ namespace SMW_Data
                         TotalDeathCount++;
                         TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
                         CounterRange();
-                    });
-                    DeathState = true;
+                    }));
+                DeathState = true;
             }
         }
 
@@ -147,13 +147,13 @@ namespace SMW_Data
             string MemoryAddressValue_KeyExit = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 5, 2);
             if (MemoryAddressValue_KeyExit != "00")
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
                     LevelDeathCount = 0;
                     TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
                     CounterRange();
-                });
+                }));
             }
         }
 
@@ -162,13 +162,13 @@ namespace SMW_Data
             string MemoryAddressValue_OtherExits = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
             if (MemoryAddressValue_OtherExits != "00")
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
                     LevelDeathCount = 0;
                     TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
                     CounterRange();
-                });
+                }));
             }
         }
 
