@@ -79,7 +79,6 @@ namespace SMW_Data
                 ProcessMemoryAddressResponse_DeathCheck(e.RawData);
                 ProcessMemoryAddressResponse_KeyExit(e.RawData);
                 ProcessMemoryAddressResponse_OtherExits(e.RawData);
-
             };
 
             ws.OnError += (sender, e) =>
@@ -87,23 +86,40 @@ namespace SMW_Data
                     //MessageBox.Show("WebSocket error: " + e.Message);
                 };
 
-                ws.OnClose += (sender, e) =>
+            ws.OnClose += (sender, e) =>
+            {
+                if (e.Code == (ushort)CloseStatusCode.Normal)
                 {
-                    if (e.Code == (ushort)CloseStatusCode.Normal)
-                    {
-                        //MessageBox.Show("WebSocket closed normally.");
-                    }
-                    else
-                    {
-                        //MessageBox.Show($"WebSocket closed with code {e.Code}: {e.Reason}");
-                    }
-                };
-            ws.Connect();
+                    //MessageBox.Show("WebSocket closed normally.");
+                }
+                else
+                {
+                    //MessageBox.Show($"WebSocket closed with code {e.Code}: {e.Reason}");
+                }
+            };
+
+            try
+            {
+                ws.Connect();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("WebSocket connection failed: " + ex.Message);
+                this.Close();
+            }
         }
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            SendGetAddressRequest(ws, AdjustedMemoryAddress_DeathCheck, AdjustedMemoryAddress_KeyExit, AdjustedMemoryAddress_OtherExits);
+            try
+            {
+                SendGetAddressRequest(ws, AdjustedMemoryAddress_DeathCheck, AdjustedMemoryAddress_KeyExit, AdjustedMemoryAddress_OtherExits);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("WebSocket connection failed: " + ex.Message);
+                this.Close();
+            }
         }
 
         private static void SendGetAddressRequest(WebSocket ws, string MemoryAddressValue_DeathCheck, string MemoryAddressValue_KeyExit, string MemoryAddressValue_OtherExits)
@@ -127,7 +143,7 @@ namespace SMW_Data
 
                 if ((MemoryAddressValue_DeathCheck == "09") && (DeathState == false))
                 {
-                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    Application.Current.Dispatcher.BeginInvoke(() =>
                     {
                         LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
                         LevelDeathCount++;
@@ -137,7 +153,7 @@ namespace SMW_Data
                         TotalDeathCount++;
                         TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
                         CounterRange();
-                    }));
+                    });
                 DeathState = true;
             }
         }
@@ -147,13 +163,13 @@ namespace SMW_Data
             string MemoryAddressValue_KeyExit = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 5, 2);
             if (MemoryAddressValue_KeyExit != "00")
             {
-                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                Application.Current.Dispatcher.BeginInvoke(() =>
                 {
                     LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
                     LevelDeathCount = 0;
                     TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
                     CounterRange();
-                }));
+                });
             }
         }
 
@@ -162,13 +178,13 @@ namespace SMW_Data
             string MemoryAddressValue_OtherExits = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
             if (MemoryAddressValue_OtherExits != "00")
             {
-                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                Application.Current.Dispatcher.BeginInvoke(() =>
                 {
                     LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
                     LevelDeathCount = 0;
                     TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
                     CounterRange();
-                }));
+                });
             }
         }
 
