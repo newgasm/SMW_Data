@@ -5,7 +5,14 @@ using System.Windows.Threading;
 using SMW_Data.View;
 using WebSocketSharp;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Windows.Input;
+using System.Linq;
+using HtmlAgilityPack;
+using System.Collections.Generic;
+using System.Xml.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace SMW_Data
 {
@@ -35,6 +42,38 @@ namespace SMW_Data
         static readonly int MemoryAddress_OtherExits = 0x7E1493;
         static readonly int adjMemoryAddress_OtherExits = 0xF50000 + (MemoryAddress_OtherExits - 0x7E0000);
         static readonly string AdjustedMemoryAddress_OtherExits = adjMemoryAddress_OtherExits.ToString("X");
+
+        public string MemoryAddressValue_LevelCounter;
+        static readonly int MemoryAddress_LevelCounter = 0x7E1F2E;
+        static readonly int adjMemoryAddress_LevelCounter = 0xF50000 + (MemoryAddress_LevelCounter - 0x7E0000);
+        static readonly string AdjustedMemoryAddress_LevelCounter = adjMemoryAddress_LevelCounter.ToString("X");
+
+        public string MemoryAddressValue_InGame;
+        static readonly int MemoryAddress_InGame = 0x7E1F15;
+        static readonly int adjMemoryAddress_InGame = 0xF50000 + (MemoryAddress_InGame - 0x7E0000);
+        static readonly string AdjustedMemoryAddress_InGame = adjMemoryAddress_InGame.ToString("X");
+
+        //public string MemoryAddressValue_GreenSwitchActivated;
+        //static readonly int MemoryAddress_GreenSwitchActivated = 0x7E1F27;
+        //static readonly int adjMemoryAddress_GreenSwitchActivated = 0xF50000 + (MemoryAddress_GreenSwitchActivated - 0x7E0000);
+        //static readonly string AdjustedMemoryAddress_GreenSwitchActivated = adjMemoryAddress_GreenSwitchActivated.ToString("X");
+
+        //public string MemoryAddressValue_YellowSwitchActivated;
+        //static readonly int MemoryAddress_YellowSwitchActivated = 0x7E1F28;
+        //static readonly int adjMemoryAddress_YellowSwitchActivated = 0xF50000 + (MemoryAddress_YellowSwitchActivated - 0x7E0000);
+        //static readonly string AdjustedMemoryAddress_YellowSwitchActivated = adjMemoryAddress_YellowSwitchActivated.ToString("X");
+
+        //public string MemoryAddressValue_BlueSwitchActivated;
+        //static readonly int MemoryAddress_BlueSwitchActivated = 0x7E1F29;
+        //static readonly int adjMemoryAddress_BlueSwitchActivated = 0xF50000 + (MemoryAddress_BlueSwitchActivated - 0x7E0000);
+        //static readonly string AdjustedMemoryAddress_BlueSwitchActivated = adjMemoryAddress_BlueSwitchActivated.ToString("X");
+
+        //public string MemoryAddressValue_RedSwitchActivated;
+        //static readonly int MemoryAddress_RedSwitchActivated = 0x7E1F2A;
+        //static readonly int adjMemoryAddress_RedSwitchActivated = 0xF50000 + (MemoryAddress_RedSwitchActivated - 0x7E0000);
+        //static readonly string AdjustedMemoryAddress_RedSwitchActivated = adjMemoryAddress_RedSwitchActivated.ToString("X");
+
+        //var Total = Number(levelCounter + GreenSwitchActivated + YellowSwitchActivated + BlueSwitchActivated + RedSwitchActivated);
 
         public MainWindow()
         {
@@ -79,6 +118,8 @@ namespace SMW_Data
                 ProcessMemoryAddressResponse_DeathCheck(e.RawData);
                 ProcessMemoryAddressResponse_KeyExit(e.RawData);
                 ProcessMemoryAddressResponse_OtherExits(e.RawData);
+                ProcessMemoryAddressResponse_LevelCounter(e.RawData);
+                ProcessMemoryAddressResponse_InGame(e.RawData);
             };
 
             ws.OnError += (sender, e) =>
@@ -113,7 +154,7 @@ namespace SMW_Data
         {
             try
             {
-                SendGetAddressRequest(ws, AdjustedMemoryAddress_DeathCheck, AdjustedMemoryAddress_KeyExit, AdjustedMemoryAddress_OtherExits);
+                SendGetAddressRequest(ws, AdjustedMemoryAddress_DeathCheck, AdjustedMemoryAddress_KeyExit, AdjustedMemoryAddress_OtherExits, AdjustedMemoryAddress_LevelCounter, AdjustedMemoryAddress_InGame); //AdjustedMemoryAddressValue_GreenSwitchActivated, AdjustedMemoryAddressValue_YellowSwitchActivated. AdjustedMemoryAddressValue_BlueSwitchActivated, AdjustedMemoryAddressValue_RedSwitchActivated
             }
             catch (Exception ex)
             {
@@ -122,20 +163,25 @@ namespace SMW_Data
             }
         }
 
-        private static void SendGetAddressRequest(WebSocket ws, string MemoryAddressValue_DeathCheck, string MemoryAddressValue_KeyExit, string MemoryAddressValue_OtherExits)
+        private static void SendGetAddressRequest(WebSocket ws, string MemoryAddressValue_DeathCheck, string MemoryAddressValue_KeyExit, string MemoryAddressValue_OtherExits, string MemoryAddressValue_LevelCounter, string MemoryAddressValue_InGame)
         {
             var getAddressRequest = new
             {
                 Opcode = "GetAddress",
                 Space = "SNES",
-                Operands = new[] { MemoryAddressValue_DeathCheck, "1", MemoryAddressValue_KeyExit, "1", MemoryAddressValue_OtherExits, "1" },
+                Operands = new[] { MemoryAddressValue_DeathCheck, "1", 
+                    MemoryAddressValue_KeyExit, "1", 
+                    MemoryAddressValue_OtherExits, "1" , 
+                    MemoryAddressValue_LevelCounter , "1",
+                    MemoryAddressValue_InGame, "1"
+                }
             };
             ws.Send(JsonConvert.SerializeObject(getAddressRequest));
         }
 
             private void ProcessMemoryAddressResponse_DeathCheck(byte[] rawData)
             {
-                string MemoryAddressValue_DeathCheck = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 8, 2);
+                string MemoryAddressValue_DeathCheck = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 14, 2);
                 if ((MemoryAddressValue_DeathCheck != "09") && (DeathState == true))
                 {
                     DeathState = false;
@@ -155,12 +201,12 @@ namespace SMW_Data
                         CounterRange();
                     });
                 DeathState = true;
+                }
             }
-        }
 
         private void ProcessMemoryAddressResponse_KeyExit(byte[] rawData)
         {
-            string MemoryAddressValue_KeyExit = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 5, 2);
+            string MemoryAddressValue_KeyExit = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 11, 2);
             if (MemoryAddressValue_KeyExit != "00")
             {
                 Application.Current.Dispatcher.BeginInvoke(() =>
@@ -175,7 +221,7 @@ namespace SMW_Data
 
         private void ProcessMemoryAddressResponse_OtherExits(byte[] rawData)
         {
-            string MemoryAddressValue_OtherExits = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
+            string MemoryAddressValue_OtherExits = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 8, 2);
             if (MemoryAddressValue_OtherExits != "00")
             {
                 Application.Current.Dispatcher.BeginInvoke(() =>
@@ -184,6 +230,29 @@ namespace SMW_Data
                     LevelDeathCount = 0;
                     TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
                     CounterRange();
+                });
+            }
+        }
+
+        private void ProcessMemoryAddressResponse_LevelCounter(byte[] rawData)
+        {
+            string MemoryAddressValue_LevelCounter = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 5, 2);
+            int LevelCountCurrent = Convert.ToInt32(MemoryAddressValue_LevelCounter, 16);
+
+            Application.Current.Dispatcher.BeginInvoke(() =>
+            {
+                TextBlock_LevelCountCurrent.Text = LevelCountCurrent.ToString();
+            });
+        }
+
+        private void ProcessMemoryAddressResponse_InGame(byte[] rawData)
+        {
+            string MemoryAddressValue_InGame = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
+            if (MemoryAddressValue_InGame != "02")
+            {
+                Application.Current.Dispatcher.BeginInvoke(() =>
+                {
+                    TextBlock_LevelCountCurrent.Text = "??";
                 });
             }
         }
@@ -302,6 +371,46 @@ namespace SMW_Data
             TotalDeathCount--;
             TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
             CounterRange();
+        }
+
+        private async void Button_GetExitCount_Click(object sender, RoutedEventArgs e)
+        {
+            string hackName = TextBox_HackName.Text;
+            string lengthText = await SMWCentralAPICall(hackName);
+            TextBlock_LevelCountTotal.Text = lengthText;
+        }
+
+        static async Task<string> SMWCentralAPICall(string hackName)
+        {
+            string apiUrl = $"https://www.smwcentral.net/ajax.php?a=getsectionlist&s=smwhacks&f[name]={hackName}";
+            string lengthText = "??";  // Default value in case there's no match
+
+            using (HttpClient httpClient = new HttpClient())
+            {
+                HttpResponseMessage response = await httpClient.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonContent = await response.Content.ReadAsStringAsync();  // Read and parse the JSON response
+                    JObject jsonObject = JObject.Parse(jsonContent);                  // Parse the JSON into a JObject
+
+                    if (jsonObject["data"] != null)                                   // Check if the JSON response contains data
+                    {
+                        JArray data = (JArray)jsonObject["data"];
+                        foreach (JToken item in data)
+                        {
+                            string name = item["name"].ToString();
+                            if (name == hackName)
+                            {
+                                string length = item["fields"]["length"].ToString();
+                                lengthText = length.Replace(" exit(s)", string.Empty).Trim();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            return lengthText;
         }
     }
 }
