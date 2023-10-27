@@ -43,10 +43,10 @@ namespace SMW_Data
         static readonly int adjMemoryAddress_OtherExits = 0xF50000 + (MemoryAddress_OtherExits - 0x7E0000);
         static readonly string AdjustedMemoryAddress_OtherExits = adjMemoryAddress_OtherExits.ToString("X");
 
-        public string MemoryAddressValue_LevelCounter;
-        static readonly int MemoryAddress_LevelCounter = 0x7E1F2E;
-        static readonly int adjMemoryAddress_LevelCounter = 0xF50000 + (MemoryAddress_LevelCounter - 0x7E0000);
-        static readonly string AdjustedMemoryAddress_LevelCounter = adjMemoryAddress_LevelCounter.ToString("X");
+        public string MemoryAddressValue_ExitCounter;
+        static readonly int MemoryAddress_ExitCounter = 0x7E1F2E;
+        static readonly int adjMemoryAddress_ExitCounter = 0xF50000 + (MemoryAddress_ExitCounter - 0x7E0000);
+        static readonly string AdjustedMemoryAddress_ExitCounter = adjMemoryAddress_ExitCounter.ToString("X");
 
         public string MemoryAddressValue_InGame;
         static readonly int MemoryAddress_InGame = 0x7E1F15;
@@ -73,7 +73,7 @@ namespace SMW_Data
         //static readonly int adjMemoryAddress_RedSwitchActivated = 0xF50000 + (MemoryAddress_RedSwitchActivated - 0x7E0000);
         //static readonly string AdjustedMemoryAddress_RedSwitchActivated = adjMemoryAddress_RedSwitchActivated.ToString("X");
 
-        //var Total = Number(levelCounter + GreenSwitchActivated + YellowSwitchActivated + BlueSwitchActivated + RedSwitchActivated);
+        //var Total = Number(exitCounter + GreenSwitchActivated + YellowSwitchActivated + BlueSwitchActivated + RedSwitchActivated);
 
         public MainWindow()
         {
@@ -118,7 +118,7 @@ namespace SMW_Data
                 ProcessMemoryAddressResponse_DeathCheck(e.RawData);
                 ProcessMemoryAddressResponse_KeyExit(e.RawData);
                 ProcessMemoryAddressResponse_OtherExits(e.RawData);
-                ProcessMemoryAddressResponse_LevelCounter(e.RawData);
+                ProcessMemoryAddressResponse_ExitCounter(e.RawData);
                 ProcessMemoryAddressResponse_InGame(e.RawData);
             };
 
@@ -154,7 +154,7 @@ namespace SMW_Data
         {
             try
             {
-                SendGetAddressRequest(ws, AdjustedMemoryAddress_DeathCheck, AdjustedMemoryAddress_KeyExit, AdjustedMemoryAddress_OtherExits, AdjustedMemoryAddress_LevelCounter, AdjustedMemoryAddress_InGame); //AdjustedMemoryAddressValue_GreenSwitchActivated, AdjustedMemoryAddressValue_YellowSwitchActivated. AdjustedMemoryAddressValue_BlueSwitchActivated, AdjustedMemoryAddressValue_RedSwitchActivated
+                SendGetAddressRequest(ws, AdjustedMemoryAddress_DeathCheck, AdjustedMemoryAddress_KeyExit, AdjustedMemoryAddress_OtherExits, AdjustedMemoryAddress_ExitCounter, AdjustedMemoryAddress_InGame); //AdjustedMemoryAddressValue_GreenSwitchActivated, AdjustedMemoryAddressValue_YellowSwitchActivated. AdjustedMemoryAddressValue_BlueSwitchActivated, AdjustedMemoryAddressValue_RedSwitchActivated
             }
             catch (Exception ex)
             {
@@ -163,7 +163,7 @@ namespace SMW_Data
             }
         }
 
-        private static void SendGetAddressRequest(WebSocket ws, string MemoryAddressValue_DeathCheck, string MemoryAddressValue_KeyExit, string MemoryAddressValue_OtherExits, string MemoryAddressValue_LevelCounter, string MemoryAddressValue_InGame)
+        private static void SendGetAddressRequest(WebSocket ws, string MemoryAddressValue_DeathCheck, string MemoryAddressValue_KeyExit, string MemoryAddressValue_OtherExits, string MemoryAddressValue_ExitCounter, string MemoryAddressValue_InGame)
         {
             var getAddressRequest = new
             {
@@ -172,7 +172,7 @@ namespace SMW_Data
                 Operands = new[] { MemoryAddressValue_DeathCheck, "1", 
                     MemoryAddressValue_KeyExit, "1", 
                     MemoryAddressValue_OtherExits, "1" , 
-                    MemoryAddressValue_LevelCounter , "1",
+                    MemoryAddressValue_ExitCounter , "1",
                     MemoryAddressValue_InGame, "1"
                 }
             };
@@ -234,14 +234,14 @@ namespace SMW_Data
             }
         }
 
-        private void ProcessMemoryAddressResponse_LevelCounter(byte[] rawData)
+        private void ProcessMemoryAddressResponse_ExitCounter(byte[] rawData)
         {
-            string MemoryAddressValue_LevelCounter = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 5, 2);
-            int LevelCountCurrent = Convert.ToInt32(MemoryAddressValue_LevelCounter, 16);
+            string MemoryAddressValue_ExitCounter = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 5, 2);
+            int ExitCountCurrent = Convert.ToInt32(MemoryAddressValue_ExitCounter, 16);
 
             Application.Current.Dispatcher.BeginInvoke(() =>
             {
-                TextBlock_LevelCountCurrent.Text = LevelCountCurrent.ToString();
+                TextBlock_ExitCountCurrent.Text = ExitCountCurrent.ToString();
             });
         }
 
@@ -252,7 +252,7 @@ namespace SMW_Data
             {
                 Application.Current.Dispatcher.BeginInvoke(() =>
                 {
-                    TextBlock_LevelCountCurrent.Text = "??";
+                    TextBlock_ExitCountCurrent.Text = "??";
                 });
             }
         }
@@ -291,6 +291,7 @@ namespace SMW_Data
                 TextBlock_TotalDeathCount.Foreground = settingsWindow.ChangeTextColor;
                 CurrentBackgroundColor = (SolidColorBrush)settingsWindow.NewBackgroundColor;
                 CurrentTextColor = (SolidColorBrush)settingsWindow.NewTextColor;
+
             }
         }
 
@@ -377,7 +378,25 @@ namespace SMW_Data
         {
             string hackName = TextBox_HackName.Text;
             string lengthText = await SMWCentralAPICall(hackName);
-            TextBlock_LevelCountTotal.Text = lengthText;
+            TextBlock_ExitCountTotal.Text = lengthText;
+        }
+
+        private async void Button_GetHackData_Click(object sender, RoutedEventArgs e)
+        {
+            string hackName = TextBox_HackName.Text;
+            string[] hackData = await SMWCentralAPICall2(hackName);
+
+            MessageBox.Show($"Hack ID: {hackData[0]} \n"+
+                $"Hack Section: {hackData[1]} \n"+
+                $"Hack Time: {hackData[2]} \n"+
+                $"Moderated: {hackData[3]} \n"+
+                $"Authors: {hackData[4]} \n"+
+                $"Tags: {hackData[5]} \n"+
+                $"Rating: {hackData[6]} \n"+
+                $"Downloads: {hackData[7]} \n"+
+                $"Length: {hackData[8]} \n"+
+                $"Difficulty: {hackData[9]} \n\n"+
+                $"Description: \n{hackData[10]}");
         }
 
         static async Task<string> SMWCentralAPICall(string hackName)
@@ -400,7 +419,7 @@ namespace SMW_Data
                         foreach (JToken item in data)
                         {
                             string name = item["name"].ToString();
-                            if (name == hackName)
+                            if (name.ToLower() == hackName.ToLower())
                             {
                                 string length = item["fields"]["length"].ToString();
                                 lengthText = length.Replace(" exit(s)", string.Empty).Trim();
@@ -411,6 +430,73 @@ namespace SMW_Data
                 }
             }
             return lengthText;
+        }
+
+        static async Task<string[]> SMWCentralAPICall2(string hackName)
+        {
+            string apiUrl = $"https://www.smwcentral.net/ajax.php?a=getsectionlist&s=smwhacks&f[name]={hackName}";
+            List<string> hackData = new List<string>();
+
+            using (HttpClient httpClient = new HttpClient())
+            {
+                HttpResponseMessage response = await httpClient.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonContent = await response.Content.ReadAsStringAsync();  // Read and parse the JSON response
+                    JObject jsonObject = JObject.Parse(jsonContent);                  // Parse the JSON into a JObject
+
+                    if (jsonObject["data"] != null)                                   // Check if the JSON response contains data
+                    {
+                        JArray data = (JArray)jsonObject["data"];
+                        foreach (JToken item in data)
+                        {
+                            string name = item["name"].ToString();
+                            if (name.ToLower() == hackName.ToLower())
+                            {
+                                string hackID = item["id"].ToString();                                  //int
+                                string hackSection = item["section"].ToString();                        //string
+                                
+                                string hackTimeUNIX = item["time"].ToString(); // Assuming item["time"] contains the UNIX timestamp as a string
+                                string hackTime = null; // Declare it outside the if block
+                                if (long.TryParse(hackTimeUNIX, out long unixTimestamp))
+                                {
+                                    DateTime dateTime = DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).DateTime;
+                                    hackTime = dateTime.ToString();
+                                }
+                                
+                                string hackModerated = item["moderated"].ToString();                    //bool
+                                
+                                string hackAuthorsArray = item["authors"].ToString();                   //user[]
+                                string[] authorsArray = JArray.Parse(hackAuthorsArray).Select(author => author["name"].ToString()).ToArray();
+                                string hackAuthors = string.Join(", ", authorsArray);
+
+                                string hackTagsArray = item["tags"].ToString();                         //string[]
+                                string[] tagsArray = JArray.Parse(hackTagsArray).Select(tag => tag.ToString()).ToArray();
+                                string hackTags = string.Join(", ", tagsArray);
+
+                                string hackRating = item["rating"].ToString();                          //number | null
+                                
+                                string hackDownloads = item["downloads"].ToString();                    //number
+                                
+                                string hackLength = item["fields"]["length"].ToString();                //string
+                                
+                                string hackDifficulty = item["fields"]["difficulty"].ToString();        //string
+                                
+                                string hackDescriptionMessy = item["fields"]["description"].ToString();  //string
+                                var doc = new HtmlDocument();
+                                doc.LoadHtml(hackDescriptionMessy);
+                                doc.DocumentNode.SelectNodes("//br")?.ToList().ForEach(br => br.Remove());
+                                string hackDescription = doc.DocumentNode.InnerText;
+
+                                hackData.AddRange(new string[] { hackID, hackSection, hackTime, hackModerated, hackAuthors, hackTags, hackRating, hackDownloads, hackLength, hackDifficulty, hackDescription });
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            return hackData.ToArray();
         }
     }
 }
