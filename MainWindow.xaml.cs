@@ -363,6 +363,12 @@ namespace SMW_Data
             CounterRange();
         }
 
+        private void ButtonLevelZero_Click(object sender, RoutedEventArgs e)
+        {
+            LevelDeathCount = 0;
+            TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
+        }
+
         private void ButtonTotalPlus_Click(object sender, RoutedEventArgs e)
         {
             TotalDeathCount = Int32.Parse(TextBlock_TotalDeathCount.Text);
@@ -377,6 +383,12 @@ namespace SMW_Data
             TotalDeathCount--;
             TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
             CounterRange();
+        }
+
+        private void ButtonTotalZero_Click(object sender, RoutedEventArgs e)
+        {
+            TotalDeathCount = 0;
+            TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
         }
 
         private async void Button_GetExitCount_Click(object sender, RoutedEventArgs e)
