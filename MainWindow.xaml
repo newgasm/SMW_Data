@@ -10,6 +10,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="25"/>
             <RowDefinition />
+            <RowDefinition Height="20"/>
         </Grid.RowDefinitions>
         <Grid x:Name="GridMenu">
             <Grid.RowDefinitions>
@@ -17,7 +18,7 @@
             </Grid.RowDefinitions>
             <!--Header Menu-->
             <Menu>
-                <MenuItem Header="File" FontSize="16">
+                <MenuItem Grid.Row="0" Header="File" FontSize="16">
                     <MenuItem Header="Settings" Click="MenuItem_Click_Settings">
                     </MenuItem>
                     <MenuItem Header="Exit" Click="MenuItem_Click_Exit">
@@ -51,9 +52,14 @@
             <Label x:Name="Label_ExitCount" Content="Exit&#xA;Count" HorizontalAlignment="Left" Margin="10,282,0,0" VerticalAlignment="Top" FontSize="24" Height="81" Width="86" HorizontalContentAlignment="Center" Foreground="White"/>
             <TextBlock x:Name="TextBlock_ExitCountCurrent" HorizontalAlignment="Left" Margin="110,248,0,0" TextWrapping="Wrap" Text="??" VerticalAlignment="Top" Height="136" Width="129" FontSize="100" FontWeight="Bold" Foreground="White" TextAlignment="Right"/>
             <TextBlock x:Name="TextBlock_ExitCountSlash" HorizontalAlignment="Left" Margin="239,242,0,0" TextWrapping="Wrap" Text="/" VerticalAlignment="Top" Height="136" Width="62" FontSize="100" FontWeight="Bold" Foreground="White" TextAlignment="Center"/>
-            <TextBlock x:Name="TextBlock_ExitCountTotal" HorizontalAlignment="Left" Margin="299,248,0,0" TextWrapping="Wrap" Text="??" VerticalAlignment="Top" Height="136" Width="491" FontSize="100" FontWeight="Bold" Foreground="White"/>
+            <TextBlock x:Name="TextBlock_ExitCountTotal" HorizontalAlignment="Left" Margin="299,248,0,0" TextWrapping="Wrap" Text="??" VerticalAlignment="Top" Height="136" Width="129" FontSize="100" FontWeight="Bold" Foreground="White"/>
             <Button x:Name="Button_GetExitCount" Content="Get Exit Count" HorizontalAlignment="Left" Margin="630,384,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_GetExitCount_Click" Width="138"/>
             <Button x:Name="Button_GetHackData" Content="Get Hack Data" HorizontalAlignment="Left" Margin="630,415,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_GetHackData_Click" Width="138"/>
+            <Button x:Name="Button_Reconnect" Content="Reconnect to WebSocket" HorizontalAlignment="Left" Margin="600,466,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_Reconnect_Click" Width="174" Height="39"/>
+        </Grid>
+        <!--Information Footer-->
+        <Grid x:Name="GridFooter" Grid.Row="2" Background="#AA2A2A2A">
+            <TextBlock x:Name="TextBlock_Footer" HorizontalAlignment="Left" Text="" VerticalAlignment="Center" FontSize="12" Foreground="Black" Margin="2,0,0,0" FontWeight="Bold"/>
         </Grid>
     </Grid>
 </Window>

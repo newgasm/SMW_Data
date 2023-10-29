@@ -10,7 +10,6 @@ using System.Windows.Input;
 using System.Linq;
 using HtmlAgilityPack;
 using System.Collections.Generic;
-using System.Xml.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -142,11 +141,12 @@ namespace SMW_Data
             try
             {
                 ws.Connect();
+                TextBlock_Footer.Text = "Connected to WebSocket";
             }
             catch (Exception ex)
             {
-                MessageBox.Show("WebSocket connection failed: " + ex.Message);
-                this.Close();
+                //MessageBox.Show("WebSocket connection failed: " + ex.Message);
+                TextBlock_Footer.Text = "Not Connected to WebSocket";
             }
         }
 
@@ -158,8 +158,7 @@ namespace SMW_Data
             }
             catch (Exception ex)
             {
-                MessageBox.Show("WebSocket connection failed: " + ex.Message);
-                this.Close();
+                TextBlock_Footer.Text = "Not Connected to WebSocket";
             }
         }
 
@@ -379,6 +378,10 @@ namespace SMW_Data
             string hackName = TextBox_HackName.Text;
             string lengthText = await SMWCentralAPICall(hackName);
             TextBlock_ExitCountTotal.Text = lengthText;
+            if (lengthText == "??")
+            {
+                MessageBox.Show("Cannot find Hack Name");
+            }
         }
 
         private async void Button_GetHackData_Click(object sender, RoutedEventArgs e)
@@ -386,17 +389,24 @@ namespace SMW_Data
             string hackName = TextBox_HackName.Text;
             string[] hackData = await SMWCentralAPICall2(hackName);
 
-            MessageBox.Show($"Hack ID: {hackData[0]} \n"+
-                $"Hack Section: {hackData[1]} \n"+
-                $"Hack Time: {hackData[2]} \n"+
-                $"Moderated: {hackData[3]} \n"+
-                $"Authors: {hackData[4]} \n"+
-                $"Tags: {hackData[5]} \n"+
-                $"Rating: {hackData[6]} \n"+
-                $"Downloads: {hackData[7]} \n"+
-                $"Length: {hackData[8]} \n"+
-                $"Difficulty: {hackData[9]} \n\n"+
-                $"Description: \n{hackData[10]}");
+            if (hackData[0] == "Cannot find Hack Name")
+            {
+                MessageBox.Show("Cannot find Hack Name");
+            }
+            else
+            {
+                MessageBox.Show($"Hack ID: {hackData[0]} \n" +
+                    $"Hack Section: {hackData[1]} \n" +
+                    $"Date Submitted: {hackData[2]} \n" +
+                    $"Moderated: {hackData[3]} \n" +
+                    $"Authors: {hackData[4]} \n" +
+                    $"Tags: {hackData[5]} \n" +
+                    $"Rating: {hackData[6]} \n" +
+                    $"Downloads: {hackData[7]} \n" +
+                    $"Length: {hackData[8]} \n" +
+                    $"Difficulty: {hackData[9]} \n\n" +
+                    $"Description: \n{hackData[10]}");
+            }
         }
 
         static async Task<string> SMWCentralAPICall(string hackName)
@@ -436,6 +446,7 @@ namespace SMW_Data
         {
             string apiUrl = $"https://www.smwcentral.net/ajax.php?a=getsectionlist&s=smwhacks&f[name]={hackName}";
             List<string> hackData = new List<string>();
+            hackData.Add("Cannot find Hack Name"); // Initialize with a default value
 
             using (HttpClient httpClient = new HttpClient())
             {
@@ -454,9 +465,10 @@ namespace SMW_Data
                             string name = item["name"].ToString();
                             if (name.ToLower() == hackName.ToLower())
                             {
+                                hackData.Clear(); // Remove the default "Cannot find Hack Name"
                                 string hackID = item["id"].ToString();                                  //int
                                 string hackSection = item["section"].ToString();                        //string
-                                
+
                                 string hackTimeUNIX = item["time"].ToString(); // Assuming item["time"] contains the UNIX timestamp as a string
                                 string hackTime = null; // Declare it outside the if block
                                 if (long.TryParse(hackTimeUNIX, out long unixTimestamp))
@@ -464,9 +476,9 @@ namespace SMW_Data
                                     DateTime dateTime = DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).DateTime;
                                     hackTime = dateTime.ToString();
                                 }
-                                
+
                                 string hackModerated = item["moderated"].ToString();                    //bool
-                                
+
                                 string hackAuthorsArray = item["authors"].ToString();                   //user[]
                                 string[] authorsArray = JArray.Parse(hackAuthorsArray).Select(author => author["name"].ToString()).ToArray();
                                 string hackAuthors = string.Join(", ", authorsArray);
@@ -476,14 +488,14 @@ namespace SMW_Data
                                 string hackTags = string.Join(", ", tagsArray);
 
                                 string hackRating = item["rating"].ToString();                          //number | null
-                                
+
                                 string hackDownloads = item["downloads"].ToString();                    //number
-                                
+
                                 string hackLength = item["fields"]["length"].ToString();                //string
-                                
+
                                 string hackDifficulty = item["fields"]["difficulty"].ToString();        //string
-                                
-                                string hackDescriptionMessy = item["fields"]["description"].ToString();  //string
+
+                                string hackDescriptionMessy = item["fields"]["description"].ToString(); //string
                                 var doc = new HtmlDocument();
                                 doc.LoadHtml(hackDescriptionMessy);
                                 doc.DocumentNode.SelectNodes("//br")?.ToList().ForEach(br => br.Remove());
@@ -497,6 +509,11 @@ namespace SMW_Data
                 }
             }
             return hackData.ToArray();
+        }
+
+        private void Button_Reconnect_Click(object sender, RoutedEventArgs e)
+        {
+            InitializeWebSocket();
         }
     }
 }
