@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SMW_Data.View"
         mc:Ignorable="d" WindowStartupLocation="CenterOwner"
-        Title="Settings" Height="160" Width="250">
+        Title="Settings" Height="160" Width="250" ResizeMode="NoResize">
     <Grid Background="White">
         <Label x:Name="LabelBackgroundColor" Content="Background Color:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" FontWeight="Bold" HorizontalContentAlignment="Right" Width="115"/>
         <Label x:Name="LabelBackgroundColor_Copy" Content="Text Color:" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" FontWeight="Bold" HorizontalContentAlignment="Right" Width="115"/>

@@ -106,7 +106,7 @@ namespace SMW_Data
                 ws.Send(JsonConvert.SerializeObject(attachRequest));
 
                 timer = new DispatcherTimer();
-                timer.Interval = TimeSpan.FromMilliseconds(16); // 16ms is approximately 60fps (checking each address once every 3 frames)
+                timer.Interval = TimeSpan.FromMilliseconds(16); // 16ms is approximately 60fps
                 timer.Tick += Timer_Tick;
                 timer.Start();
 
@@ -430,7 +430,7 @@ namespace SMW_Data
         static async Task<string> SMWCentralAPICall(string hackName)
         {
             string apiUrl = $"https://www.smwcentral.net/ajax.php?a=getsectionlist&s=smwhacks&f[name]={hackName}";
-            string lengthText = "??";  // Default value in case there's no match
+            string lengthText = "??";
 
             using (HttpClient httpClient = new HttpClient())
             {
@@ -532,6 +532,16 @@ namespace SMW_Data
         private void Button_Reconnect_Click(object sender, RoutedEventArgs e)
         {
             InitializeWebSocket();
+        }
+
+        private void TextBox_HackName_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_HackName.Text == "[Enter Hack Name Here]")
+            {
+                TextBox_HackName.Clear();
+                TextBox_HackName.Focus();
+                TextBox_HackName.Foreground = new SolidColorBrush(Colors.Black);
+            }
         }
     }
 }
