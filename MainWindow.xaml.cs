@@ -156,7 +156,7 @@ namespace SMW_Data
             {
                 SendGetAddressRequest(ws, AdjustedMemoryAddress_DeathCheck, AdjustedMemoryAddress_KeyExit, AdjustedMemoryAddress_OtherExits, AdjustedMemoryAddress_ExitCounter, AdjustedMemoryAddress_InGame); //AdjustedMemoryAddressValue_GreenSwitchActivated, AdjustedMemoryAddressValue_YellowSwitchActivated. AdjustedMemoryAddressValue_BlueSwitchActivated, AdjustedMemoryAddressValue_RedSwitchActivated
             }
-            catch (Exception ex)
+            catch
             {
                 TextBlock_Footer.Text = "Not Connected to WebSocket";
             }
@@ -288,6 +288,12 @@ namespace SMW_Data
                 Label_TotalDeathCount.Foreground = settingsWindow.ChangeTextColor;
                 TextBlock_LevelDeathCount.Foreground = settingsWindow.ChangeTextColor;
                 TextBlock_TotalDeathCount.Foreground = settingsWindow.ChangeTextColor;
+                Label_ExitCount.Foreground = settingsWindow.ChangeTextColor;
+                TextBlock_ExitCountCurrent.Foreground = settingsWindow.ChangeTextColor;
+                TextBlock_ExitCountSlash.Foreground = settingsWindow.ChangeTextColor;
+                TextBlock_ExitCountTotal.Foreground = settingsWindow.ChangeTextColor;
+                Label_HackName.Foreground = settingsWindow.ChangeTextColor;
+
                 CurrentBackgroundColor = (SolidColorBrush)settingsWindow.NewBackgroundColor;
                 CurrentTextColor = (SolidColorBrush)settingsWindow.NewTextColor;
 
@@ -446,7 +452,7 @@ namespace SMW_Data
         {
             string apiUrl = $"https://www.smwcentral.net/ajax.php?a=getsectionlist&s=smwhacks&f[name]={hackName}";
             List<string> hackData = new List<string>();
-            hackData.Add("Cannot find Hack Name"); // Initialize with a default value
+            hackData.Add("Cannot find Hack Name");
 
             using (HttpClient httpClient = new HttpClient())
             {
@@ -465,12 +471,12 @@ namespace SMW_Data
                             string name = item["name"].ToString();
                             if (name.ToLower() == hackName.ToLower())
                             {
-                                hackData.Clear(); // Remove the default "Cannot find Hack Name"
+                                hackData.Clear();
                                 string hackID = item["id"].ToString();                                  //int
                                 string hackSection = item["section"].ToString();                        //string
 
-                                string hackTimeUNIX = item["time"].ToString(); // Assuming item["time"] contains the UNIX timestamp as a string
-                                string hackTime = null; // Declare it outside the if block
+                                string hackTimeUNIX = item["time"].ToString();
+                                string hackTime = null;
                                 if (long.TryParse(hackTimeUNIX, out long unixTimestamp))
                                 {
                                     DateTime dateTime = DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).DateTime;

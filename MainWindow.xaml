@@ -47,9 +47,9 @@
             <Button x:Name="ButtonTotalPlus" Content="+" HorizontalAlignment="Left" Margin="594,199,0,0" VerticalAlignment="Top" Height="23" Width="23" FontSize="12" FontWeight="Bold" Click="ButtonTotalPlus_Click"/>
             <Button x:Name="ButtonTotalMinus" Content="-" HorizontalAlignment="Left" Margin="563,199,0,0" VerticalAlignment="Top" Height="23" Width="23" FontWeight="Bold" FontSize="12" Click="ButtonTotalMinus_Click"/>
             <!--Level Count Data-->
+            <Label x:Name="Label_ExitCount" Content="Exit&#xA;Count" HorizontalAlignment="Left" Margin="10,282,0,0" VerticalAlignment="Top" FontSize="24" Height="81" Width="86" HorizontalContentAlignment="Center" Foreground="White"/>
             <Label x:Name="Label_HackName" Content="Hack&#xA;Name" HorizontalAlignment="Left" Margin="10,373,0,0" VerticalAlignment="Top" FontSize="24" Height="81" Width="86" HorizontalContentAlignment="Center" Foreground="White"/>
             <TextBox x:Name="TextBox_HackName" HorizontalAlignment="Left" Margin="101,393,0,0" Text="[Enter Hack Name Here]" VerticalAlignment="Top" Width="520" FontSize="24" Height="39" MaxLines="1"/>
-            <Label x:Name="Label_ExitCount" Content="Exit&#xA;Count" HorizontalAlignment="Left" Margin="10,282,0,0" VerticalAlignment="Top" FontSize="24" Height="81" Width="86" HorizontalContentAlignment="Center" Foreground="White"/>
             <TextBlock x:Name="TextBlock_ExitCountCurrent" HorizontalAlignment="Left" Margin="110,248,0,0" TextWrapping="Wrap" Text="??" VerticalAlignment="Top" Height="136" Width="129" FontSize="100" FontWeight="Bold" Foreground="White" TextAlignment="Right"/>
             <TextBlock x:Name="TextBlock_ExitCountSlash" HorizontalAlignment="Left" Margin="239,242,0,0" TextWrapping="Wrap" Text="/" VerticalAlignment="Top" Height="136" Width="62" FontSize="100" FontWeight="Bold" Foreground="White" TextAlignment="Center"/>
             <TextBlock x:Name="TextBlock_ExitCountTotal" HorizontalAlignment="Left" Margin="299,248,0,0" TextWrapping="Wrap" Text="??" VerticalAlignment="Top" Height="136" Width="129" FontSize="100" FontWeight="Bold" Foreground="White"/>
