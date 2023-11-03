@@ -93,7 +93,7 @@ namespace SMW_Data
                 {
                     Opcode = "Attach",
                     Space = "SNES",
-                    Operands = new[] { "SD2SNES COM3" }
+                    Operands = new[] { "SD2SNES COM4" }
                 };
                 ws.Send(JsonConvert.SerializeObject(attachRequest));
 
