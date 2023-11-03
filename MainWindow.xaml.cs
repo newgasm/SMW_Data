@@ -24,6 +24,14 @@ namespace SMW_Data
         private static int LevelDeathCount;
         public bool DeathState;
 
+        private static int SwitchesActivated = 0;
+        public bool GreenSwitchActivated;
+        public bool YellowSwitchActivated;
+        public bool BlueSwitchActivated;
+        public bool RedSwitchActivated;
+
+        private bool isFirstMessageReceived = false;
+
         static WebSocket ws;
         private DispatcherTimer timer;
 
@@ -47,32 +55,16 @@ namespace SMW_Data
         static readonly int adjMemoryAddress_ExitCounter = 0xF50000 + (MemoryAddress_ExitCounter - 0x7E0000);
         static readonly string AdjustedMemoryAddress_ExitCounter = adjMemoryAddress_ExitCounter.ToString("X");
 
+        public string MemoryAddressValue_SwitchesActivated;
+        static readonly int MemoryAddress_SwitchesActivated = 0x7E1F27;
+        static readonly int adjMemoryAddress_SwitchesActivated = 0xF50000 + (MemoryAddress_SwitchesActivated - 0x7E0000);
+        static readonly string AdjustedMemoryAddress_SwitchesActivated = adjMemoryAddress_SwitchesActivated.ToString("X");
+
+
         public string MemoryAddressValue_InGame;
         static readonly int MemoryAddress_InGame = 0x7E1F15;
         static readonly int adjMemoryAddress_InGame = 0xF50000 + (MemoryAddress_InGame - 0x7E0000);
         static readonly string AdjustedMemoryAddress_InGame = adjMemoryAddress_InGame.ToString("X");
-
-        //public string MemoryAddressValue_GreenSwitchActivated;
-        //static readonly int MemoryAddress_GreenSwitchActivated = 0x7E1F27;
-        //static readonly int adjMemoryAddress_GreenSwitchActivated = 0xF50000 + (MemoryAddress_GreenSwitchActivated - 0x7E0000);
-        //static readonly string AdjustedMemoryAddress_GreenSwitchActivated = adjMemoryAddress_GreenSwitchActivated.ToString("X");
-
-        //public string MemoryAddressValue_YellowSwitchActivated;
-        //static readonly int MemoryAddress_YellowSwitchActivated = 0x7E1F28;
-        //static readonly int adjMemoryAddress_YellowSwitchActivated = 0xF50000 + (MemoryAddress_YellowSwitchActivated - 0x7E0000);
-        //static readonly string AdjustedMemoryAddress_YellowSwitchActivated = adjMemoryAddress_YellowSwitchActivated.ToString("X");
-
-        //public string MemoryAddressValue_BlueSwitchActivated;
-        //static readonly int MemoryAddress_BlueSwitchActivated = 0x7E1F29;
-        //static readonly int adjMemoryAddress_BlueSwitchActivated = 0xF50000 + (MemoryAddress_BlueSwitchActivated - 0x7E0000);
-        //static readonly string AdjustedMemoryAddress_BlueSwitchActivated = adjMemoryAddress_BlueSwitchActivated.ToString("X");
-
-        //public string MemoryAddressValue_RedSwitchActivated;
-        //static readonly int MemoryAddress_RedSwitchActivated = 0x7E1F2A;
-        //static readonly int adjMemoryAddress_RedSwitchActivated = 0xF50000 + (MemoryAddress_RedSwitchActivated - 0x7E0000);
-        //static readonly string AdjustedMemoryAddress_RedSwitchActivated = adjMemoryAddress_RedSwitchActivated.ToString("X");
-
-        //var Total = Number(exitCounter + GreenSwitchActivated + YellowSwitchActivated + BlueSwitchActivated + RedSwitchActivated);
 
         public MainWindow()
         {
@@ -114,11 +106,19 @@ namespace SMW_Data
 
             ws.OnMessage += (sender, e) =>
             {
-                ProcessMemoryAddressResponse_DeathCheck(e.RawData);
-                ProcessMemoryAddressResponse_KeyExit(e.RawData);
-                ProcessMemoryAddressResponse_OtherExits(e.RawData);
-                ProcessMemoryAddressResponse_ExitCounter(e.RawData);
-                ProcessMemoryAddressResponse_InGame(e.RawData);
+                if (isFirstMessageReceived)
+                {
+                    ProcessMemoryAddressResponse_DeathCheck(e.RawData);
+                    ProcessMemoryAddressResponse_KeyExit(e.RawData);
+                    ProcessMemoryAddressResponse_OtherExits(e.RawData);
+                    ProcessMemoryAddressResponse_ExitCounter(e.RawData);
+                    ProcessMemoryAddressResponse_InGame(e.RawData);
+                    ProcessMemoryAddressResponse_Switches(e.RawData);
+                }
+                else
+                {
+                    isFirstMessageReceived = true;
+                }
             };
 
             ws.OnError += (sender, e) =>
@@ -154,7 +154,13 @@ namespace SMW_Data
         {
             try
             {
-                SendGetAddressRequest(ws, AdjustedMemoryAddress_DeathCheck, AdjustedMemoryAddress_KeyExit, AdjustedMemoryAddress_OtherExits, AdjustedMemoryAddress_ExitCounter, AdjustedMemoryAddress_InGame); //AdjustedMemoryAddressValue_GreenSwitchActivated, AdjustedMemoryAddressValue_YellowSwitchActivated. AdjustedMemoryAddressValue_BlueSwitchActivated, AdjustedMemoryAddressValue_RedSwitchActivated
+                SendGetAddressRequest(ws,
+                    AdjustedMemoryAddress_SwitchesActivated, 
+                    AdjustedMemoryAddress_DeathCheck, 
+                    AdjustedMemoryAddress_KeyExit, 
+                    AdjustedMemoryAddress_OtherExits, 
+                    AdjustedMemoryAddress_ExitCounter, 
+                    AdjustedMemoryAddress_InGame);
             }
             catch
             {
@@ -162,13 +168,21 @@ namespace SMW_Data
             }
         }
 
-        private static void SendGetAddressRequest(WebSocket ws, string MemoryAddressValue_DeathCheck, string MemoryAddressValue_KeyExit, string MemoryAddressValue_OtherExits, string MemoryAddressValue_ExitCounter, string MemoryAddressValue_InGame)
+        private static void SendGetAddressRequest(WebSocket ws,
+            string MemoryAddressValue_SwitchesActivated, 
+            string MemoryAddressValue_DeathCheck, 
+            string MemoryAddressValue_KeyExit, 
+            string MemoryAddressValue_OtherExits, 
+            string MemoryAddressValue_ExitCounter, 
+            string MemoryAddressValue_InGame)
         {
             var getAddressRequest = new
             {
                 Opcode = "GetAddress",
                 Space = "SNES",
-                Operands = new[] { MemoryAddressValue_DeathCheck, "1", 
+                Operands = new[] {
+                    MemoryAddressValue_SwitchesActivated, "4",
+                    MemoryAddressValue_DeathCheck, "1", 
                     MemoryAddressValue_KeyExit, "1", 
                     MemoryAddressValue_OtherExits, "1" , 
                     MemoryAddressValue_ExitCounter , "1",
@@ -177,8 +191,44 @@ namespace SMW_Data
             };
             ws.Send(JsonConvert.SerializeObject(getAddressRequest));
         }
+  
+        private void ProcessMemoryAddressResponse_Switches(byte[] rawData)
+        {
+            string MemoryAddressValue_GreenSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 26, 2);
+            if (MemoryAddressValue_GreenSwitchActivated != "00" && GreenSwitchActivated == false)
+            {
+                GreenSwitchActivated = true;
+                SwitchesActivated++;
+            }
 
-            private void ProcessMemoryAddressResponse_DeathCheck(byte[] rawData)
+            string MemoryAddressValue_YellowSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 23, 2);
+            if (MemoryAddressValue_YellowSwitchActivated != "00" && YellowSwitchActivated == false)
+            {
+                YellowSwitchActivated = true;
+                SwitchesActivated++;
+            }
+            
+            string MemoryAddressValue_BlueSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 20, 2);
+            if (MemoryAddressValue_BlueSwitchActivated != "00" && BlueSwitchActivated == false)
+            {
+                BlueSwitchActivated = true;
+                SwitchesActivated++;
+            }
+            
+            string MemoryAddressValue_RedSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 17, 2);
+            if (MemoryAddressValue_RedSwitchActivated != "00" && RedSwitchActivated == false)
+            {
+                RedSwitchActivated = true;
+                SwitchesActivated++;
+            }
+            
+            Application.Current.Dispatcher.BeginInvoke(() =>
+            {
+                TextBlock_SwitchCount.Text = "+" + SwitchesActivated.ToString();
+            }); 
+        }
+
+        private void ProcessMemoryAddressResponse_DeathCheck(byte[] rawData)
             {
                 string MemoryAddressValue_DeathCheck = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 14, 2);
                 if ((MemoryAddressValue_DeathCheck != "09") && (DeathState == true))
@@ -243,7 +293,6 @@ namespace SMW_Data
                 TextBlock_ExitCountCurrent.Text = ExitCountCurrent.ToString();
             });
         }
-
         private void ProcessMemoryAddressResponse_InGame(byte[] rawData)
         {
             string MemoryAddressValue_InGame = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
@@ -252,6 +301,8 @@ namespace SMW_Data
                 Application.Current.Dispatcher.BeginInvoke(() =>
                 {
                     TextBlock_ExitCountCurrent.Text = "??";
+                    TextBlock_SwitchCount.Text = "+0";
+                    SwitchesActivated = 0;
                 });
             }
         }
