@@ -40,20 +40,11 @@ namespace SMW_Data
         static readonly int adjMemoryAddress_DeathCheck = 0xF50000 + (MemoryAddress_DeathCheck - 0x7E0000);
         static readonly string AdjustedMemoryAddress_DeathCheck = adjMemoryAddress_DeathCheck.ToString("X");
 
-        public string MemoryAddressValue_KeyExit;
-        static readonly int MemoryAddress_KeyExit = 0x7E1435;
-        static readonly int adjMemoryAddress_KeyExit = 0xF50000 + (MemoryAddress_KeyExit - 0x7E0000);
-        static readonly string AdjustedMemoryAddress_KeyExit = adjMemoryAddress_KeyExit.ToString("X");
-
-        public string MemoryAddressValue_OtherExits;
-        static readonly int MemoryAddress_OtherExits = 0x7E1493;
-        static readonly int adjMemoryAddress_OtherExits = 0xF50000 + (MemoryAddress_OtherExits - 0x7E0000);
-        static readonly string AdjustedMemoryAddress_OtherExits = adjMemoryAddress_OtherExits.ToString("X");
-
         public string MemoryAddressValue_ExitCounter;
         static readonly int MemoryAddress_ExitCounter = 0x7E1F2E;
         static readonly int adjMemoryAddress_ExitCounter = 0xF50000 + (MemoryAddress_ExitCounter - 0x7E0000);
         static readonly string AdjustedMemoryAddress_ExitCounter = adjMemoryAddress_ExitCounter.ToString("X");
+        private int previousExitCounterValue = 0;
 
         public string MemoryAddressValue_SwitchesActivated;
         static readonly int MemoryAddress_SwitchesActivated = 0x7E1F27;
@@ -93,7 +84,7 @@ namespace SMW_Data
                 {
                     Opcode = "Attach",
                     Space = "SNES",
-                    Operands = new[] { "SD2SNES COM4" }
+                    Operands = new[] { "SD2SNES COM3" }
                 };
                 ws.Send(JsonConvert.SerializeObject(attachRequest));
 
@@ -109,8 +100,6 @@ namespace SMW_Data
                 if (isFirstMessageReceived)
                 {
                     ProcessMemoryAddressResponse_DeathCheck(e.RawData);
-                    ProcessMemoryAddressResponse_KeyExit(e.RawData);
-                    ProcessMemoryAddressResponse_OtherExits(e.RawData);
                     ProcessMemoryAddressResponse_ExitCounter(e.RawData);
                     ProcessMemoryAddressResponse_InGame(e.RawData);
                     ProcessMemoryAddressResponse_Switches(e.RawData);
@@ -122,9 +111,9 @@ namespace SMW_Data
             };
 
             ws.OnError += (sender, e) =>
-                {
-                    //MessageBox.Show("WebSocket error: " + e.Message);
-                };
+            {
+                //MessageBox.Show("WebSocket error: " + e.Message);
+            };
 
             ws.OnClose += (sender, e) =>
             {
@@ -155,11 +144,9 @@ namespace SMW_Data
             try
             {
                 SendGetAddressRequest(ws,
-                    AdjustedMemoryAddress_SwitchesActivated, 
-                    AdjustedMemoryAddress_DeathCheck, 
-                    AdjustedMemoryAddress_KeyExit, 
-                    AdjustedMemoryAddress_OtherExits, 
-                    AdjustedMemoryAddress_ExitCounter, 
+                    AdjustedMemoryAddress_SwitchesActivated,
+                    AdjustedMemoryAddress_DeathCheck,
+                    AdjustedMemoryAddress_ExitCounter,
                     AdjustedMemoryAddress_InGame);
             }
             catch
@@ -169,11 +156,9 @@ namespace SMW_Data
         }
 
         private static void SendGetAddressRequest(WebSocket ws,
-            string MemoryAddressValue_SwitchesActivated, 
-            string MemoryAddressValue_DeathCheck, 
-            string MemoryAddressValue_KeyExit, 
-            string MemoryAddressValue_OtherExits, 
-            string MemoryAddressValue_ExitCounter, 
+            string MemoryAddressValue_SwitchesActivated,
+            string MemoryAddressValue_DeathCheck,
+            string MemoryAddressValue_ExitCounter,
             string MemoryAddressValue_InGame)
         {
             var getAddressRequest = new
@@ -182,104 +167,72 @@ namespace SMW_Data
                 Space = "SNES",
                 Operands = new[] {
                     MemoryAddressValue_SwitchesActivated, "4",
-                    MemoryAddressValue_DeathCheck, "1", 
-                    MemoryAddressValue_KeyExit, "1", 
-                    MemoryAddressValue_OtherExits, "1" , 
+                    MemoryAddressValue_DeathCheck, "1",
                     MemoryAddressValue_ExitCounter , "1",
                     MemoryAddressValue_InGame, "1"
                 }
             };
             ws.Send(JsonConvert.SerializeObject(getAddressRequest));
         }
-  
+
         private void ProcessMemoryAddressResponse_Switches(byte[] rawData)
         {
-            string MemoryAddressValue_GreenSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 26, 2);
+            string MemoryAddressValue_GreenSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 20, 2);
             if (MemoryAddressValue_GreenSwitchActivated != "00" && GreenSwitchActivated == false)
             {
                 GreenSwitchActivated = true;
                 SwitchesActivated++;
             }
 
-            string MemoryAddressValue_YellowSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 23, 2);
+            string MemoryAddressValue_YellowSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 17, 2);
             if (MemoryAddressValue_YellowSwitchActivated != "00" && YellowSwitchActivated == false)
             {
                 YellowSwitchActivated = true;
                 SwitchesActivated++;
             }
-            
-            string MemoryAddressValue_BlueSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 20, 2);
+
+            string MemoryAddressValue_BlueSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 14, 2);
             if (MemoryAddressValue_BlueSwitchActivated != "00" && BlueSwitchActivated == false)
             {
                 BlueSwitchActivated = true;
                 SwitchesActivated++;
             }
-            
-            string MemoryAddressValue_RedSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 17, 2);
+
+            string MemoryAddressValue_RedSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 11, 2);
             if (MemoryAddressValue_RedSwitchActivated != "00" && RedSwitchActivated == false)
             {
                 RedSwitchActivated = true;
                 SwitchesActivated++;
             }
-            
+
             Application.Current.Dispatcher.BeginInvoke(() =>
             {
                 TextBlock_SwitchCount.Text = "+" + SwitchesActivated.ToString();
-            }); 
+            });
         }
 
         private void ProcessMemoryAddressResponse_DeathCheck(byte[] rawData)
+        {
+            string MemoryAddressValue_DeathCheck = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 8, 2);
+            if ((MemoryAddressValue_DeathCheck != "09") && (DeathState == true))
             {
-                string MemoryAddressValue_DeathCheck = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 14, 2);
-                if ((MemoryAddressValue_DeathCheck != "09") && (DeathState == true))
-                {
-                    DeathState = false;
-                }
+                DeathState = false;
+            }
 
-                if ((MemoryAddressValue_DeathCheck == "09") && (DeathState == false))
+            if ((MemoryAddressValue_DeathCheck == "09") && (DeathState == false))
+            {
+                Application.Current.Dispatcher.BeginInvoke(() =>
                 {
-                    Application.Current.Dispatcher.BeginInvoke(() =>
-                    {
-                        LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
-                        LevelDeathCount++;
-                        TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
+                    LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
+                    LevelDeathCount++;
+                    TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
 
-                        TotalDeathCount = Int32.Parse(TextBlock_TotalDeathCount.Text);
-                        TotalDeathCount++;
-                        TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
-                        CounterRange();
-                    });
+                    TotalDeathCount = Int32.Parse(TextBlock_TotalDeathCount.Text);
+                    TotalDeathCount++;
+                    TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
+                    CounterRange();
+                });
                 DeathState = true;
-                }
-            }
-
-        private void ProcessMemoryAddressResponse_KeyExit(byte[] rawData)
-        {
-            string MemoryAddressValue_KeyExit = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 11, 2);
-            if (MemoryAddressValue_KeyExit != "00")
-            {
-                Application.Current.Dispatcher.BeginInvoke(() =>
-                {
-                    LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
-                    LevelDeathCount = 0;
-                    TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
-                    CounterRange();
-                });
-            }
-        }
-
-        private void ProcessMemoryAddressResponse_OtherExits(byte[] rawData)
-        {
-            string MemoryAddressValue_OtherExits = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 8, 2);
-            if (MemoryAddressValue_OtherExits != "00")
-            {
-                Application.Current.Dispatcher.BeginInvoke(() =>
-                {
-                    LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
-                    LevelDeathCount = 0;
-                    TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
-                    CounterRange();
-                });
             }
         }
 
@@ -292,6 +245,18 @@ namespace SMW_Data
             {
                 TextBlock_ExitCountCurrent.Text = ExitCountCurrent.ToString();
             });
+
+            if (ExitCountCurrent != previousExitCounterValue)
+            {
+                Application.Current.Dispatcher.BeginInvoke(() =>
+                {
+                    LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
+                    LevelDeathCount = 0;
+                    TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
+                    CounterRange();
+                });
+                previousExitCounterValue = ExitCountCurrent;
+            }
         }
         private void ProcessMemoryAddressResponse_InGame(byte[] rawData)
         {
@@ -309,7 +274,7 @@ namespace SMW_Data
 
         private void CounterRange()
         {
-            if (Int32.Parse(TextBlock_LevelDeathCount.Text)>= 999999)
+            if (Int32.Parse(TextBlock_LevelDeathCount.Text) >= 999999)
             {
                 TextBlock_LevelDeathCount.Text = "999999";
             }
@@ -356,17 +321,17 @@ namespace SMW_Data
             this.Close();
         }
 
-        private void Button_ResetLevel_Click(object sender, RoutedEventArgs e)
+        private void Button_SetLevel_Click(object sender, RoutedEventArgs e)
         {
-            TextBlock_LevelDeathCount.Text = "0";
+            TextBlock_LevelDeathCount.Text = TextBox_LevelDeaths.Text;
         }
 
-        private void Button_ResetTotal_Click(object sender, RoutedEventArgs e)
+        private void Button_SetTotal_Click(object sender, RoutedEventArgs e)
         {
-            TextBlock_TotalDeathCount.Text = "0";
+            TextBlock_TotalDeathCount.Text = TextBox_TotalDeaths.Text;
         }
 
-        private void TextBox_AddLevelDeaths_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        private void TextBox_LevelDeaths_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             if (!int.TryParse(e.Text, out _))
             {
@@ -374,7 +339,7 @@ namespace SMW_Data
             }
         }
 
-        private void TextBox_AddTotalDeaths_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        private void TextBox_TotalDeaths_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             if (!int.TryParse(e.Text, out _))
             {
@@ -385,7 +350,7 @@ namespace SMW_Data
         private void Button_AddLevelDeaths_Click(object sender, RoutedEventArgs e)
         {
             LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
-            LevelDeathCount += Int32.Parse(TextBox_AddLevelDeaths.Text);
+            LevelDeathCount += Int32.Parse(TextBox_LevelDeaths.Text);
             TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
             CounterRange();
         }
@@ -393,7 +358,7 @@ namespace SMW_Data
         private void Button_AddTotalDeaths_Click(object sender, RoutedEventArgs e)
         {
             TotalDeathCount = Int32.Parse(TextBlock_TotalDeathCount.Text);
-            TotalDeathCount += Int32.Parse(TextBox_AddTotalDeaths.Text);
+            TotalDeathCount += Int32.Parse(TextBox_TotalDeaths.Text);
             TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
             CounterRange();
         }
