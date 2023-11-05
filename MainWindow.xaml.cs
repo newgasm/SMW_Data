@@ -346,6 +346,13 @@ namespace SMW_Data
                 e.Handled = true;
             }
         }
+        private void TextBox_ExitCountTotal_Manual_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
 
         private void Button_AddLevelDeaths_Click(object sender, RoutedEventArgs e)
         {
@@ -405,6 +412,11 @@ namespace SMW_Data
         {
             TotalDeathCount = 0;
             TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
+        }
+
+        private void Button_SetTotalExits_Click(object sender, RoutedEventArgs e)
+        {
+            TextBlock_ExitCountTotal.Text = TextBox_ExitCountTotal_Manual.Text;
         }
 
         private async void Button_GetExitCount_Click(object sender, RoutedEventArgs e)
