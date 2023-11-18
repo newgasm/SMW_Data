@@ -14,7 +14,6 @@ using Newtonsoft.Json.Linq;
 using HtmlAgilityPack;
 using System.IO.Ports;
 
-
 namespace SMW_Data
 {
     public partial class MainWindow : Window
@@ -65,6 +64,7 @@ namespace SMW_Data
             InitializeComponent();
             CurrentBackgroundColor = (SolidColorBrush)GridMain.Background;
             CurrentTextColor = (SolidColorBrush)Label_LevelDeathCount.Foreground;
+            TextBlock_SwitchCount.Visibility = Visibility.Collapsed;
             InitializeWebSocket();
             InitializeWebSocket();
         }
@@ -436,6 +436,15 @@ namespace SMW_Data
             {
                 MessageBox.Show("Cannot find Hack Name");
             }
+        }
+
+        private void CheckBox_ShowSwitchExits_Checked(object sender, RoutedEventArgs e)
+        {
+            TextBlock_SwitchCount.Visibility = Visibility.Visible;
+        }
+        private void CheckBox_ShowSwitchExits_Unchecked(object sender, RoutedEventArgs e)
+        {
+            TextBlock_SwitchCount.Visibility = Visibility.Collapsed;
         }
 
         private async void Button_GetHackData_Click(object sender, RoutedEventArgs e)

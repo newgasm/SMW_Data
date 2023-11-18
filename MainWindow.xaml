@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SMW_Data"
         mc:Ignorable="d"
-        Title="SMW Data" Height="600" Width="810" FontSize="24">
+        Title="SMW Data" Height="800" Width="810" FontSize="24">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="25"/>
@@ -48,21 +48,26 @@
             <Button x:Name="ButtonTotalPlus" Content="+" HorizontalAlignment="Left" Margin="586,199,0,0" VerticalAlignment="Top" Height="23" Width="23" FontSize="12" FontWeight="Bold" Click="ButtonTotalPlus_Click"/>
             <Button x:Name="ButtonTotalMinus" Content="-" HorizontalAlignment="Left" Margin="555,199,0,0" VerticalAlignment="Top" Height="23" Width="23" FontWeight="Bold" FontSize="12" Click="ButtonTotalMinus_Click"/>
             <Button x:Name="ButtonTotalZero" Content="0" HorizontalAlignment="Left" Margin="616,199,0,0" VerticalAlignment="Top" Height="23" Width="23" FontSize="12" FontWeight="Bold" Click="ButtonTotalZero_Click"/>
+            <!--Level Time-->
+
+            <!--Total Time-->
+
             <!--Exit Counts-->
-            <Label x:Name="Label_ExitCount" Content="Exit&#xA;Count" HorizontalAlignment="Left" Margin="10,282,0,0" VerticalAlignment="Top" FontSize="24" Height="81" Width="86" HorizontalContentAlignment="Center" Foreground="White"/>
-            <TextBlock x:Name="TextBlock_ExitCountCurrent" HorizontalAlignment="Left" Margin="110,248,0,0" TextWrapping="Wrap" Text="??" VerticalAlignment="Top" Height="136" Width="129" FontSize="100" FontWeight="Bold" Foreground="White" TextAlignment="Right"/>
-            <TextBlock x:Name="TextBlock_ExitCountSlash" HorizontalAlignment="Left" Margin="239,242,0,0" TextWrapping="Wrap" Text="/" VerticalAlignment="Top" Height="136" Width="62" FontSize="100" FontWeight="Bold" Foreground="White" TextAlignment="Center"/>
-            <TextBlock x:Name="TextBlock_ExitCountTotal" HorizontalAlignment="Left" Margin="299,248,0,0" TextWrapping="Wrap" Text="??" VerticalAlignment="Top" Height="136" Width="257" FontSize="100" FontWeight="Bold" Foreground="White"/>
-            <TextBlock x:Name="TextBlock_SwitchCount" HorizontalAlignment="Left" Margin="173,352,0,0" TextWrapping="Wrap" Text="+0" VerticalAlignment="Top" Height="53" Width="51" FontSize="36" FontWeight="Bold" Foreground="White" TextAlignment="Right"/>
-            <TextBox x:Name="TextBox_ExitCountTotal_Manual" HorizontalAlignment="Left" Margin="586,312,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="53" FontSize="14" Height="22" TextAlignment="Center" MaxLines="1" MaxLength="3" PreviewTextInput="TextBox_ExitCountTotal_Manual_PreviewTextInput"/>
-            <Button x:Name="Button_SetTotalExits" Content="Set Total Exits" HorizontalAlignment="Left" Margin="645,311,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_SetTotalExits_Click" Width="138"/>
+            <Label x:Name="Label_ExitCount" Content="Exit&#xA;Count" HorizontalAlignment="Left" Margin="10,467,0,0" VerticalAlignment="Top" FontSize="24" Height="81" Width="86" HorizontalContentAlignment="Center" Foreground="White"/>
+            <TextBlock x:Name="TextBlock_ExitCountCurrent" HorizontalAlignment="Left" Margin="110,434,0,0" TextWrapping="Wrap" Text="??" VerticalAlignment="Top" Height="136" Width="129" FontSize="100" FontWeight="Bold" Foreground="White" TextAlignment="Right"/>
+            <TextBlock x:Name="TextBlock_ExitCountSlash" HorizontalAlignment="Left" Margin="239,428,0,0" TextWrapping="Wrap" Text="/" VerticalAlignment="Top" Height="136" Width="62" FontSize="100" FontWeight="Bold" Foreground="White" TextAlignment="Center"/>
+            <TextBlock x:Name="TextBlock_ExitCountTotal" HorizontalAlignment="Left" Margin="299,434,0,0" TextWrapping="Wrap" Text="??" VerticalAlignment="Top" Height="136" Width="257" FontSize="100" FontWeight="Bold" Foreground="White"/>
+            <TextBlock x:Name="TextBlock_SwitchCount" HorizontalAlignment="Left" Margin="173,538,0,0" TextWrapping="Wrap" Text="+0" VerticalAlignment="Top" Height="53" Width="51" FontSize="36" FontWeight="Bold" Foreground="White" TextAlignment="Right" Visibility="Visible"/>
+            <CheckBox x:Name="CheckBox_ShowSwitchExits" IsChecked="False" Content="Show Switch Exits?" Margin="609,482,27,212" Foreground="White" FontSize="14" FontWeight="Bold" Checked="CheckBox_ShowSwitchExits_Checked" Unchecked="CheckBox_ShowSwitchExits_Unchecked"/>
+            <TextBox x:Name="TextBox_ExitCountTotal_Manual" HorizontalAlignment="Left" Margin="586,512,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="53" FontSize="14" Height="22" TextAlignment="Center" MaxLines="1" MaxLength="3" PreviewTextInput="TextBox_ExitCountTotal_Manual_PreviewTextInput"/>
+            <Button x:Name="Button_SetTotalExits" Content="Set Total Exits" HorizontalAlignment="Left" Margin="645,512,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_SetTotalExits_Click" Width="138"/>
             <!--Hack Data-->
-            <Label x:Name="Label_HackName" Content="Hack&#xA;Name" HorizontalAlignment="Left" Margin="10,385,0,0" VerticalAlignment="Top" FontSize="24" Height="81" Width="86" HorizontalContentAlignment="Center" Foreground="White"/>
-            <TextBox x:Name="TextBox_HackName" HorizontalAlignment="Left" Margin="101,405,0,0" Text="[Enter Hack Name Here]" VerticalAlignment="Top" Width="538" FontSize="24" Height="39" MaxLines="1" Foreground="DarkGray" GotFocus="TextBox_HackName_GotFocus"/>
-            <Button x:Name="Button_GetExitCount" Content="Get Exit Count" HorizontalAlignment="Left" Margin="645,396,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_GetExitCount_Click" Width="138"/>
-            <Button x:Name="Button_GetHackData" Content="Get Hack Data" HorizontalAlignment="Left" Margin="645,427,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_GetHackData_Click" Width="138"/>
+            <Label x:Name="Label_HackName" Content="Hack&#xA;Name" HorizontalAlignment="Left" Margin="10,579,0,0" VerticalAlignment="Top" FontSize="24" Height="81" Width="86" HorizontalContentAlignment="Center" Foreground="White"/>
+            <TextBox x:Name="TextBox_HackName" HorizontalAlignment="Left" Margin="101,599,0,0" Text="[Enter Hack Name Here]" VerticalAlignment="Top" Width="538" FontSize="24" Height="39" MaxLines="1" Foreground="DarkGray" GotFocus="TextBox_HackName_GotFocus"/>
+            <Button x:Name="Button_GetExitCount" Content="Get Exit Count" HorizontalAlignment="Left" Margin="645,590,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_GetExitCount_Click" Width="138"/>
+            <Button x:Name="Button_GetHackData" Content="Get Hack Data" HorizontalAlignment="Left" Margin="645,621,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_GetHackData_Click" Width="138"/>
             <!--WebSocket-->
-            <Button x:Name="Button_Reconnect" Content="Reconnect to WebSocket" HorizontalAlignment="Left" Margin="615,466,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_Reconnect_Click" Width="174" Height="39"/>
+            <Button x:Name="Button_Reconnect" Content="Reconnect to WebSocket" HorizontalAlignment="Left" Margin="615,660,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_Reconnect_Click" Width="174" Height="39"/>
         </Grid>
         <!--Information Footer-->
         <Grid x:Name="GridFooter" Grid.Row="2" Background="#AA2A2A2A">
