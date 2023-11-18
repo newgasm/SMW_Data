@@ -2,16 +2,18 @@
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Windows.Input;
+using System.Linq;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
 using SMW_Data.View;
 using WebSocketSharp;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Windows.Input;
-using System.Linq;
 using HtmlAgilityPack;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
+using System.IO.Ports;
+
 
 namespace SMW_Data
 {
@@ -23,6 +25,7 @@ namespace SMW_Data
         private static int TotalDeathCount;
         private static int LevelDeathCount;
         public bool DeathState;
+        public bool itWorked;
 
         private static int SwitchesActivated = 0;
         public bool GreenSwitchActivated;
@@ -63,6 +66,7 @@ namespace SMW_Data
             CurrentBackgroundColor = (SolidColorBrush)GridMain.Background;
             CurrentTextColor = (SolidColorBrush)Label_LevelDeathCount.Foreground;
             InitializeWebSocket();
+            InitializeWebSocket();
         }
 
         private void InitializeWebSocket()
@@ -80,19 +84,23 @@ namespace SMW_Data
                 };
                 ws.Send(JsonConvert.SerializeObject(deviceListRequest));
 
-                var attachRequest = new
+                string[] availablePorts = SerialPort.GetPortNames();
+
+                foreach (string comPort in availablePorts)
                 {
-                    Opcode = "Attach",
-                    Space = "SNES",
-                    Operands = new[] { "SD2SNES COM3" }
-                };
-                ws.Send(JsonConvert.SerializeObject(attachRequest));
+                    var attachRequest = new
+                    {
+                        Opcode = "Attach",
+                        Space = "SNES",
+                        Operands = new[] { $"SD2SNES {comPort}" }
+                    };
+                    ws.Send(JsonConvert.SerializeObject(attachRequest));
+                }
 
                 timer = new DispatcherTimer();
                 timer.Interval = TimeSpan.FromMilliseconds(16); // 16ms is approximately 60fps
                 timer.Tick += Timer_Tick;
                 timer.Start();
-
             };
 
             ws.OnMessage += (sender, e) =>
