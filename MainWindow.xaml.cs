@@ -465,8 +465,8 @@ namespace SMW_Data
 
         static async Task<string> SMWCentralAPICall(string hackName)
         {
-            string apiUrl = $"https://www.smwcentral.net/ajax.php?a=getsectionlist&s=smwhacks&f[name]={hackName}";
             string lengthText = "??";
+            string apiUrl = $"https://www.smwcentral.net/ajax.php?a=getsectionlist&s=smwhacks&u=0&f[name]={hackName}";
 
             using (HttpClient httpClient = new HttpClient())
             {
@@ -493,14 +493,47 @@ namespace SMW_Data
                     }
                 }
             }
+
+            if (lengthText == "??")
+            {
+                apiUrl = $"https://www.smwcentral.net/ajax.php?a=getsectionlist&s=smwhacks&u=1&f[name]={hackName}";
+
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    HttpResponseMessage response = await httpClient.GetAsync(apiUrl);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string jsonContent = await response.Content.ReadAsStringAsync();  // Read and parse the JSON response
+                        JObject jsonObject = JObject.Parse(jsonContent);                  // Parse the JSON into a JObject
+
+                        if (jsonObject["data"] != null)                                   // Check if the JSON response contains data
+                        {
+                            JArray data = (JArray)jsonObject["data"];
+                            foreach (JToken item in data)
+                            {
+                                string name = item["name"].ToString();
+                                if (name.ToLower() == hackName.ToLower())
+                                {
+                                    string length = item["fields"]["length"].ToString();
+                                    lengthText = length.Replace(" exit(s)", string.Empty).Trim();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             return lengthText;
         }
 
         static async Task<string[]> SMWCentralAPICall2(string hackName)
         {
-            string apiUrl = $"https://www.smwcentral.net/ajax.php?a=getsectionlist&s=smwhacks&f[name]={hackName}";
             List<string> hackData = new List<string>();
             hackData.Add("Cannot find Hack Name");
+
+            string apiUrl = $"https://www.smwcentral.net/ajax.php?a=getsectionlist&s=smwhacks&u=0&f[name]={hackName}";
 
             using (HttpClient httpClient = new HttpClient())
             {
@@ -562,6 +595,73 @@ namespace SMW_Data
                     }
                 }
             }
+            
+            if (hackData[0] == "Cannot find Hack Name")
+            {
+                apiUrl = $"https://www.smwcentral.net/ajax.php?a=getsectionlist&s=smwhacks&u=1&f[name]={hackName}";
+
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    HttpResponseMessage response = await httpClient.GetAsync(apiUrl);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string jsonContent = await response.Content.ReadAsStringAsync();  // Read and parse the JSON response
+                        JObject jsonObject = JObject.Parse(jsonContent);                  // Parse the JSON into a JObject
+
+                        if (jsonObject["data"] != null)                                   // Check if the JSON response contains data
+                        {
+                            JArray data = (JArray)jsonObject["data"];
+                            foreach (JToken item in data)
+                            {
+                                string name = item["name"].ToString();
+                                if (name.ToLower() == hackName.ToLower())
+                                {
+                                    hackData.Clear();
+                                    string hackID = item["id"].ToString();                                  //int
+                                    string hackSection = item["section"].ToString();                        //string
+
+                                    string hackTimeUNIX = item["time"].ToString();
+                                    string hackTime = null;
+                                    if (long.TryParse(hackTimeUNIX, out long unixTimestamp))
+                                    {
+                                        DateTime dateTime = DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).DateTime;
+                                        hackTime = dateTime.ToString();
+                                    }
+
+                                    string hackModerated = item["moderated"].ToString();                    //bool
+
+                                    string hackAuthorsArray = item["authors"].ToString();                   //user[]
+                                    string[] authorsArray = JArray.Parse(hackAuthorsArray).Select(author => author["name"].ToString()).ToArray();
+                                    string hackAuthors = string.Join(", ", authorsArray);
+
+                                    string hackTagsArray = item["tags"].ToString();                         //string[]
+                                    string[] tagsArray = JArray.Parse(hackTagsArray).Select(tag => tag.ToString()).ToArray();
+                                    string hackTags = string.Join(", ", tagsArray);
+
+                                    string hackRating = item["rating"].ToString();                          //number | null
+
+                                    string hackDownloads = item["downloads"].ToString();                    //number
+
+                                    string hackLength = item["fields"]["length"].ToString();                //string
+
+                                    string hackDifficulty = item["fields"]["difficulty"].ToString();        //string
+
+                                    string hackDescriptionMessy = item["fields"]["description"].ToString(); //string
+                                    var doc = new HtmlDocument();
+                                    doc.LoadHtml(hackDescriptionMessy);
+                                    doc.DocumentNode.SelectNodes("//br")?.ToList().ForEach(br => br.Remove());
+                                    string hackDescription = doc.DocumentNode.InnerText;
+
+                                    hackData.AddRange(new string[] { hackID, hackSection, hackTime, hackModerated, hackAuthors, hackTags, hackRating, hackDownloads, hackLength, hackDifficulty, hackDescription });
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             return hackData.ToArray();
         }
 
