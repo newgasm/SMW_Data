@@ -35,7 +35,16 @@ namespace SMW_Data
         private bool isFirstMessageReceived = false;
 
         static WebSocket ws;
-        private DispatcherTimer timer;
+        private DispatcherTimer timerSNES;
+        private DispatcherTimer timerLevel;
+        private DispatcherTimer timerTotal;
+        private DateTime startTimeLevel;
+        private DateTime startTimeTotal;
+        private TimeSpan currentTimeLevel = TimeSpan.Zero;
+        private TimeSpan currentTimeTotal = TimeSpan.Zero;
+        private TimeSpan elapsedTotal = TimeSpan.Zero;
+        private TimeSpan elapsedLevel = TimeSpan.Zero;
+
 
         public string MemoryAddressValue_DeathCheck;
         static readonly int MemoryAddress_DeathCheck = 0x7E0071;
@@ -66,7 +75,6 @@ namespace SMW_Data
             CurrentTextColor = (SolidColorBrush)Label_LevelDeathCount.Foreground;
             TextBlock_SwitchCount.Visibility = Visibility.Collapsed;
             InitializeWebSocket();
-            InitializeWebSocket();
         }
 
         private void InitializeWebSocket()
@@ -84,10 +92,12 @@ namespace SMW_Data
                 };
                 ws.Send(JsonConvert.SerializeObject(deviceListRequest));
 
-                string[] availablePorts = SerialPort.GetPortNames();
+                string comPort = "COM" + TextBox_COMPort.Text;
 
-                foreach (string comPort in availablePorts)
-                {
+                //string[] availablePorts = SerialPort.GetPortNames();
+
+                //foreach (string comPort in availablePorts)
+                //{
                     var attachRequest = new
                     {
                         Opcode = "Attach",
@@ -95,18 +105,19 @@ namespace SMW_Data
                         Operands = new[] { $"SD2SNES {comPort}" }
                     };
                     ws.Send(JsonConvert.SerializeObject(attachRequest));
-                }
+                //}
 
-                timer = new DispatcherTimer();
-                timer.Interval = TimeSpan.FromMilliseconds(16); // 16ms is approximately 60fps
-                timer.Tick += Timer_Tick;
-                timer.Start();
+                timerSNES = new DispatcherTimer();
+                timerSNES.Interval = TimeSpan.FromMilliseconds(16); // 16ms is approximately 60fps
+                timerSNES.Tick += Timer_Tick;
+                timerSNES.Start();
             };
 
             ws.OnMessage += (sender, e) =>
             {
                 if (isFirstMessageReceived)
                 {
+                    //MessageBox.Show(BitConverter.ToString(e.RawData));
                     ProcessMemoryAddressResponse_DeathCheck(e.RawData);
                     ProcessMemoryAddressResponse_ExitCounter(e.RawData);
                     ProcessMemoryAddressResponse_InGame(e.RawData);
@@ -183,8 +194,9 @@ namespace SMW_Data
             ws.Send(JsonConvert.SerializeObject(getAddressRequest));
         }
 
-        private void ProcessMemoryAddressResponse_Switches(byte[] rawData)
+        private void ProcessMemoryAddressResponse_Switches(byte[] rawData) //This doesnt always seem to work (not sure why).
         {
+
             string MemoryAddressValue_GreenSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 20, 2);
             if (MemoryAddressValue_GreenSwitchActivated != "00" && GreenSwitchActivated == false)
             {
@@ -263,9 +275,13 @@ namespace SMW_Data
                     TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
                     CounterRange();
                 });
+
+                startTimeLevel = DateTime.Now;
+                
                 previousExitCounterValue = ExitCountCurrent;
             }
         }
+
         private void ProcessMemoryAddressResponse_InGame(byte[] rawData)
         {
             string MemoryAddressValue_InGame = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
@@ -317,6 +333,15 @@ namespace SMW_Data
                 TextBlock_ExitCountSlash.Foreground = settingsWindow.ChangeTextColor;
                 TextBlock_ExitCountTotal.Foreground = settingsWindow.ChangeTextColor;
                 Label_HackName.Foreground = settingsWindow.ChangeTextColor;
+                Label_LevelTime.Foreground = settingsWindow.ChangeTextColor;
+                Label_LastLevelTime.Foreground = settingsWindow.ChangeTextColor;
+                Label_TotalTime.Foreground = settingsWindow.ChangeTextColor;
+                TextBlock_LevelTime.Foreground = settingsWindow.ChangeTextColor;
+                TextBlock_LastLevelTime.Foreground = settingsWindow.ChangeTextColor;
+                TextBlock_TotalTime.Foreground = settingsWindow.ChangeTextColor;
+                Label_TimeUnits.Foreground = settingsWindow.ChangeTextColor;
+                Label_Level.Foreground = settingsWindow.ChangeTextColor;
+                Label_Total.Foreground = settingsWindow.ChangeTextColor;
 
                 CurrentBackgroundColor = (SolidColorBrush)settingsWindow.NewBackgroundColor;
                 CurrentTextColor = (SolidColorBrush)settingsWindow.NewTextColor;
@@ -422,6 +447,250 @@ namespace SMW_Data
             TextBlock_TotalDeathCount.Text = TotalDeathCount.ToString();
         }
 
+        private void Button_TimersStartStop_Click(object sender, RoutedEventArgs e)
+        {
+            if (Button_TimersStartStop.Content.ToString().Contains("Start"))
+            {
+                Button_TimersStartStop.Content = "Stop\nTimers";
+                GetCurrentTotalTime();
+                GetCurrentLevelTime();
+
+                if (currentTimeTotal == TimeSpan.Zero)
+                {
+                    startTimeTotal = DateTime.Now;
+                }
+                else
+                {
+                    startTimeTotal = DateTime.Now - elapsedTotal;
+                }
+
+                timerTotal = new DispatcherTimer();
+                timerTotal.Interval = TimeSpan.FromMilliseconds(0.01); //huge resource hog... need to figure out how to improve (8-10x LiveSplit)
+                timerTotal.Tick += Timer_Total_Tick;
+                timerTotal.Start();
+
+                if (currentTimeLevel == TimeSpan.Zero)
+                {
+                    startTimeLevel = DateTime.Now;
+                }
+                else
+                {
+                    startTimeLevel = DateTime.Now - elapsedLevel;
+                }
+
+                timerLevel = new DispatcherTimer();
+                timerLevel.Interval = TimeSpan.FromMilliseconds(0.01);
+                timerLevel.Tick += Timer_Level_Tick;
+                timerLevel.Start();
+
+            }
+            else
+            {
+                Button_TimersStartStop.Content = "Start\nTimers";
+                elapsedTotal = DateTime.Now - startTimeTotal;
+                elapsedLevel = DateTime.Now - startTimeLevel;
+                timerTotal.Stop();
+                timerLevel.Stop();
+            }
+        }
+
+        private void GetCurrentTotalTime()
+        {
+            switch (TextBlock_TotalTime.Text.Length)
+            {
+                case 4:     // <10s
+                    currentTimeTotal = TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 1))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 2, 2)));
+                    break;
+                case 5:     // 1min
+                    currentTimeTotal = TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 2, 2)));
+                    break;
+                case 7:     // <10min
+                    currentTimeTotal = TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 1))) +
+                        TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(3, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 2, 2)));
+                    break;
+                case 8:     // <1hr
+                    currentTimeTotal = TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 2))) +
+                        TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(4, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 2, 2)));
+                    break;
+                case 10:    // <10hrs
+                    currentTimeTotal = TimeSpan.FromHours(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 1))) +
+                        TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(3, 2))) +
+                        TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(5, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 2, 2)));
+                    break;
+                case 11:    // <100hrs
+                    currentTimeTotal = TimeSpan.FromHours(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 2))) +
+                        TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(4, 2))) +
+                        TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(6, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 2, 2)));
+                    break;
+                case 12:    // <1000hrs
+                    currentTimeTotal = TimeSpan.FromHours(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 3))) +
+                        TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(5, 2))) +
+                        TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(7, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 2, 2)));
+                    break;
+                default:    //>=1000hrs
+                    currentTimeTotal = TimeSpan.FromHours(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 4))) +
+                        TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(6, 2))) +
+                        TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(8, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 2, 2)));
+                    break;
+            }
+        }
+
+        private void GetCurrentLevelTime()
+        {
+            switch (TextBlock_LevelTime.Text.Length)
+            {
+                case 4:     // <10s
+                    currentTimeLevel = TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 1))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 2, 2)));
+                    break;
+                case 5:     // 1min
+                    currentTimeLevel = TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 2, 2)));
+                    break;
+                case 7:     // <10min
+                    currentTimeLevel = TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 1))) +
+                        TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(3, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 2, 2)));
+                    break;
+                case 8:     // <1hr
+                    currentTimeLevel = TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 2))) +
+                        TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(4, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 2, 2)));
+                    break;
+                case 10:    // <10hrs
+                    currentTimeLevel = TimeSpan.FromHours(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 1))) +
+                        TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(3, 2))) +
+                        TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(5, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 2, 2)));
+                    break;
+                case 11:    // <100hrs
+                    currentTimeLevel = TimeSpan.FromHours(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 2))) +
+                        TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(4, 2))) +
+                        TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(6, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 2, 2)));
+                    break;
+                case 12:    // <1000hrs
+                    currentTimeLevel = TimeSpan.FromHours(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 3))) +
+                        TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(5, 2))) +
+                        TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(7, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 2, 2)));
+                    break;
+                default:    //>=1000hrs
+                    currentTimeLevel = TimeSpan.FromHours(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 4))) +
+                        TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(6, 2))) +
+                        TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(8, 2))) +
+                        TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 2, 2)));
+                    break;
+            }
+        }
+
+        private void Timer_Total_Tick(object sender, EventArgs e)
+        {
+            TimeSpan elapsedTotal = DateTime.Now - startTimeTotal;
+
+            if (Convert.ToInt32(elapsedTotal.ToString(@"dd")) != 0)
+            {
+                int totalHours = (int)elapsedTotal.TotalHours;
+                TextBlock_TotalTime.Text = totalHours + ":" + elapsedTotal.ToString(@"mm\:ss\.ff");
+            }
+            else if (Convert.ToInt32(elapsedTotal.ToString(@"hh")) != 0)
+            {
+                int totalHours = (int)elapsedTotal.TotalHours;
+                TextBlock_TotalTime.Text = totalHours + ":" + elapsedTotal.ToString(@"mm\:ss\.ff");
+            }
+            else if (Convert.ToInt32(elapsedTotal.ToString(@"mm")) != 0)
+            {
+                int totalMinutes = (int)elapsedTotal.TotalMinutes;
+                TextBlock_TotalTime.Text = totalMinutes + ":" + elapsedTotal.ToString(@"ss\.ff");
+            }
+            else
+            {
+                int totalSeconds = (int)elapsedTotal.TotalSeconds;
+                TextBlock_TotalTime.Text = totalSeconds + "." + elapsedTotal.ToString(@"ff");
+            }
+        }
+
+        private void Timer_Level_Tick(object sender, EventArgs e)
+        {
+            if (elapsedLevel == elapsedTotal)
+            {
+                TimeSpan elapsedLevel = DateTime.Now - startTimeTotal;
+
+                if (Convert.ToInt32(elapsedLevel.ToString(@"dd")) != 0)
+                {
+                    int levelHours = (int)elapsedLevel.TotalHours;
+                    TextBlock_LevelTime.Text = levelHours + ":" + elapsedLevel.ToString(@"mm\:ss\.ff");
+                }
+                else if (Convert.ToInt32(elapsedLevel.ToString(@"hh")) != 0)
+                {
+                    int levelHours = (int)elapsedLevel.TotalHours;
+                    TextBlock_LevelTime.Text = levelHours + ":" + elapsedLevel.ToString(@"mm\:ss\.ff");
+                }
+                else if (Convert.ToInt32(elapsedLevel.ToString(@"mm")) != 0)
+                {
+                    int levelMinutes = (int)elapsedLevel.TotalMinutes;
+                    TextBlock_LevelTime.Text = levelMinutes + ":" + elapsedLevel.ToString(@"ss\.ff");
+                }
+                else
+                {
+                    int levelSeconds = (int)elapsedLevel.TotalSeconds;
+                    TextBlock_LevelTime.Text = levelSeconds + "." + elapsedLevel.ToString(@"ff");
+                }
+            }
+            else
+            {
+                TimeSpan elapsedLevel = DateTime.Now - startTimeLevel;
+
+                if (Convert.ToInt32(elapsedLevel.ToString(@"dd")) != 0)
+                {
+                    int levelHours = (int)elapsedLevel.TotalHours;
+                    TextBlock_LevelTime.Text = levelHours + ":" + elapsedLevel.ToString(@"mm\:ss\.ff");
+                }
+                else if (Convert.ToInt32(elapsedLevel.ToString(@"hh")) != 0)
+                {
+                    int levelHours = (int)elapsedLevel.TotalHours;
+                    TextBlock_LevelTime.Text = levelHours + ":" + elapsedLevel.ToString(@"mm\:ss\.ff");
+                }
+                else if (Convert.ToInt32(elapsedLevel.ToString(@"mm")) != 0)
+                {
+                    int levelMinutes = (int)elapsedLevel.TotalMinutes;
+                    TextBlock_LevelTime.Text = levelMinutes + ":" + elapsedLevel.ToString(@"ss\.ff");
+                }
+                else
+                {
+                    int levelSeconds = (int)elapsedLevel.TotalSeconds;
+                    TextBlock_LevelTime.Text = levelSeconds + "." + elapsedLevel.ToString(@"ff");
+                }
+            }
+        }
+    
+        private void Button_TimerResetLevel_Click(object sender, RoutedEventArgs e)
+        {
+            startTimeLevel = DateTime.Now;
+            TextBlock_LevelTime.Text = "0.00";
+        }
+
+        private void Button_TimerResetAll_Click(object sender, RoutedEventArgs e)
+        {
+            startTimeTotal = DateTime.Now;
+            startTimeLevel = DateTime.Now;
+            TextBlock_LevelTime.Text = "0.00";
+            TextBlock_TotalTime.Text = "0.00";
+        }
+
+        private void Button_TimersSet_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
         private void Button_SetTotalExits_Click(object sender, RoutedEventArgs e)
         {
             TextBlock_ExitCountTotal.Text = TextBox_ExitCountTotal_Manual.Text;
@@ -444,7 +713,7 @@ namespace SMW_Data
         }
         private void CheckBox_ShowSwitchExits_Unchecked(object sender, RoutedEventArgs e)
         {
-            TextBlock_SwitchCount.Visibility = Visibility.Collapsed;
+            TextBlock_SwitchCount.Visibility = Visibility.Hidden;
         }
 
         private async void Button_GetHackData_Click(object sender, RoutedEventArgs e)
@@ -674,7 +943,7 @@ namespace SMW_Data
             return hackData.ToArray();
         }
 
-        private void Button_Reconnect_Click(object sender, RoutedEventArgs e)
+        private void Button_Connect_Click(object sender, RoutedEventArgs e)
         {
             InitializeWebSocket();
         }
