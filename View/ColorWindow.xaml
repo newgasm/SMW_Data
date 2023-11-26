@@ -1,11 +1,11 @@
-﻿<Window x:Name="Window2" x:Class="SMW_Data.View.SettingsWindow"
+﻿<Window x:Name="Window2" x:Class="SMW_Data.View.ColorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SMW_Data.View"
         mc:Ignorable="d" WindowStartupLocation="CenterOwner"
-        Title="Settings" Height="160" Width="250" ResizeMode="NoResize">
+        Title="Colors" Height="160" Width="250" ResizeMode="NoResize">
     <Grid Background="White">
         <Label x:Name="LabelBackgroundColor" Content="Background Color:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" FontWeight="Bold" HorizontalContentAlignment="Right" Width="115"/>
         <Label x:Name="LabelBackgroundColor_Copy" Content="Text Color:" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" FontWeight="Bold" HorizontalContentAlignment="Right" Width="115"/>

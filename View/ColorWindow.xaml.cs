@@ -4,51 +4,51 @@ using WinForms = System.Windows.Forms;
 
 namespace SMW_Data.View
 {
-    public partial class SettingsWindow : Window
+    public partial class ColorWindow : Window
     {
-        public bool SettingsOK { get; set; }
-        public System.Windows.Media.Brush ChangeBackgroundColor { get; set; }
-        public System.Windows.Media.Brush ChangeTextColor { get; set; }
-        public System.Windows.Media.Brush NewBackgroundColor;
-        public System.Windows.Media.Brush NewTextColor;
+        public bool ColorOK { get; set; }
+        public Brush ChangeBackgroundColor { get; set; }
+        public Brush ChangeTextColor { get; set; }
+        public Brush NewBackgroundColor;
+        public Brush NewTextColor;
         private readonly MainWindow mainWindow;
 
-        public SettingsWindow(MainWindow main)
+        public ColorWindow(MainWindow main)
         {
             Owner = main;
             mainWindow = main;
             InitializeComponent();
 
             // Initialize colors
-            ChangeBackgroundColor = System.Windows.Media.Brushes.White;
-            ChangeTextColor = System.Windows.Media.Brushes.White;
+            ChangeBackgroundColor = Brushes.White;
+            ChangeTextColor = Brushes.White;
 
             // Pull in current Background Color
-            System.Windows.Media.SolidColorBrush MainBackgroundColor = mainWindow.CurrentBackgroundColor;
-            System.Windows.Media.Color color1 = MainBackgroundColor.Color;
+            SolidColorBrush MainBackgroundColor = mainWindow.CurrentBackgroundColor;
+            Color color1 = MainBackgroundColor.Color;
             string CurrentBackgroundHexColor = ColorToHexString2(color1);
             TextBoxBackgroundColor.Text = CurrentBackgroundHexColor;
             
             //Change Background Color Button to current color
-            System.Windows.Media.Brush hexColorBrush1 = new SolidColorBrush(color1);
+            Brush hexColorBrush1 = new SolidColorBrush(color1);
             ButtonBackgroundColor.Background = hexColorBrush1;
             NewBackgroundColor = hexColorBrush1;
 
             // Pull in current Text Color
-            System.Windows.Media.SolidColorBrush MainTextColor = mainWindow.CurrentTextColor;
-            System.Windows.Media.Color color2 = MainTextColor.Color;
+            SolidColorBrush MainTextColor = mainWindow.CurrentTextColor;
+            Color color2 = MainTextColor.Color;
             string CurrentTextHexColor = ColorToHexString2(color2);
             TextBoxTextColor.Text = CurrentTextHexColor;
 
             //Change Text Color Button to current color
-            System.Windows.Media.Brush hexColorBrush2 = new SolidColorBrush(System.Windows.Media.Color.FromArgb(color2.A, color2.R, color2.G, color2.B));
+            Brush hexColorBrush2 = new SolidColorBrush(Color.FromArgb(color2.A, color2.R, color2.G, color2.B));
             ButtonTextColor.Background = hexColorBrush2;
             NewTextColor = hexColorBrush2;
         }
 
         private void ButtonOK_Click(object sender, RoutedEventArgs e)
         {
-            SettingsOK = true;
+            ColorOK = true;
             ChangeBackgroundColor = NewBackgroundColor;
             ChangeTextColor = NewTextColor;
             this.Close();
@@ -59,7 +59,7 @@ namespace SMW_Data.View
             this.Close();
         }
 
-        private static string ColorToHexString2(System.Windows.Media.Color c)
+        private static string ColorToHexString2(Color c)
         {
             return "#" + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
         }
@@ -80,7 +80,7 @@ namespace SMW_Data.View
             {
                 string backgroundColor = ColorToHexString(colorDialog.Color);
                 TextBoxBackgroundColor.Text = backgroundColor;
-                System.Windows.Media.Brush backgroundBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(colorDialog.Color.A, colorDialog.Color.R, colorDialog.Color.G, colorDialog.Color.B));
+                Brush backgroundBrush = new SolidColorBrush(Color.FromArgb(colorDialog.Color.A, colorDialog.Color.R, colorDialog.Color.G, colorDialog.Color.B));
                 ButtonBackgroundColor.Background = backgroundBrush;
                 NewBackgroundColor = backgroundBrush;
             }
@@ -96,7 +96,7 @@ namespace SMW_Data.View
             {
                 string textColor = ColorToHexString(colorDialog.Color);
                 TextBoxTextColor.Text = textColor;
-                System.Windows.Media.Brush textBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(colorDialog.Color.A, colorDialog.Color.R, colorDialog.Color.G, colorDialog.Color.B));
+                Brush textBrush = new SolidColorBrush(Color.FromArgb(colorDialog.Color.A, colorDialog.Color.R, colorDialog.Color.G, colorDialog.Color.B));
                 ButtonTextColor.Background = textBrush;
                 NewTextColor = textBrush;
             }
@@ -121,15 +121,15 @@ namespace SMW_Data.View
                 byte backgroundByteG = byte.Parse(backgroundColorG, System.Globalization.NumberStyles.HexNumber);
                 byte backgroundByteB = byte.Parse(backgroundColorB, System.Globalization.NumberStyles.HexNumber);
 
-                System.Windows.Media.Color color = System.Windows.Media.Color.FromArgb(backgroundByteA, backgroundByteR, backgroundByteG, backgroundByteB);
-                System.Windows.Media.Brush backgroundBrush = new SolidColorBrush(color);
+                Color color = System.Windows.Media.Color.FromArgb(backgroundByteA, backgroundByteR, backgroundByteG, backgroundByteB);
+                Brush backgroundBrush = new SolidColorBrush(color);
 
                 ButtonBackgroundColor.Background = backgroundBrush;
                 NewBackgroundColor = backgroundBrush;
             }
             else
             {
-                System.Windows.MessageBox.Show("Invalid color format. Please use #RRGGBB format.");
+                MessageBox.Show("Invalid color format. Please use #RRGGBB format.");
             }
         }
 
@@ -150,15 +150,15 @@ namespace SMW_Data.View
                 byte textByteG = byte.Parse(textColorG, System.Globalization.NumberStyles.HexNumber);
                 byte textByteB = byte.Parse(textColorB, System.Globalization.NumberStyles.HexNumber);
 
-                System.Windows.Media.Color color1 = System.Windows.Media.Color.FromArgb(textByteA, textByteR, textByteG, textByteB);
-                System.Windows.Media.Brush textBrush = new SolidColorBrush(color1);
+                Color color1 = System.Windows.Media.Color.FromArgb(textByteA, textByteR, textByteG, textByteB);
+                Brush textBrush = new SolidColorBrush(color1);
                 
                 ButtonTextColor.Background = textBrush;
                 NewTextColor = textBrush;
             }
             else
             {
-                System.Windows.MessageBox.Show("Invalid color format. Please use #RRGGBB format.");
+                MessageBox.Show("Invalid color format. Please use #RRGGBB format.");
             }
         }
     }
