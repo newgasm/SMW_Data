@@ -78,6 +78,22 @@ namespace SMW_Data
 
         private void InitializeWebSocket()
         {
+            GreenSwitchActivated = false;
+            YellowSwitchActivated = false;
+            RedSwitchActivated = false;
+            BlueSwitchActivated = false;
+            SwitchesActivated = 0;
+
+            try
+            {
+                ws.Close();
+                TextBlock_Footer.Text = "Not Connected to WebSocket";
+            }
+            catch
+            {
+                //MessageBox.Show("No WebSocket Open");
+            }
+
             ws = new WebSocket("ws://localhost:8080");
 
             ws.OnOpen += (sender, e) =>
@@ -703,14 +719,20 @@ namespace SMW_Data
             TextBlock_ExitCountTotal.Text = TextBox_ExitCountTotal_Manual.Text;
         }
 
-        private async void Button_GetExitCount_Click(object sender, RoutedEventArgs e)
+        private async void Button_UpdateHackInfo_Click(object sender, RoutedEventArgs e)
         {
             string hackName = TextBox_HackName.Text;
-            string lengthText = await SMWCentralAPICall(hackName);
-            TextBlock_ExitCountTotal.Text = lengthText;
-            if (lengthText == "??")
+            string[] hackData = await SMWCentralAPICall(hackName);
+
+            if (hackData[0] == "Cannot find Hack Name")
             {
                 MessageBox.Show("Cannot find Hack Name");
+            }
+            else
+            {
+                Label_Hack.Content = hackData[0];
+                Label_Creator.Content = "By: " + hackData[1];
+                TextBlock_ExitCountTotal.Text = hackData[2];
             }
         }
 
@@ -734,9 +756,6 @@ namespace SMW_Data
             }
             else
             {
-                Label_Hack.Content = hackData[0];
-                Label_Creator.Content = "By: " + hackData[5];
-
                 MessageBox.Show($"Hack Name: {hackData[0]} \n" +
                     $"Hack ID: {hackData[1]} \n" +
                     $"Hack Section: {hackData[2]} \n" +
@@ -752,8 +771,11 @@ namespace SMW_Data
             }
         }
 
-        static async Task<string> SMWCentralAPICall(string hackName)
+        static async Task<string[]> SMWCentralAPICall(string hackName)
         {
+            List<string> hackData = new List<string>();
+            hackData.Add("Cannot find Hack Name");
+
             string lengthText = "??";
             string apiUrl = $"https://www.smwcentral.net/ajax.php?a=getsectionlist&s=smwhacks&u=0&f[name]={hackName}";
 
@@ -774,8 +796,16 @@ namespace SMW_Data
                             string name = item["name"].ToString();
                             if (name.ToLower() == hackName.ToLower())
                             {
+                                hackData.Clear();
+                                string hack_Name = name;
+
+                                string hackAuthorsArray = item["authors"].ToString();                   //user[]
+                                string[] authorsArray = JArray.Parse(hackAuthorsArray).Select(author => author["name"].ToString()).ToArray();
+                                string hackAuthors = string.Join(", ", authorsArray);
+
                                 string length = item["fields"]["length"].ToString();
                                 lengthText = length.Replace(" exit(s)", string.Empty).Trim();
+                                hackData.AddRange(new string[] { hack_Name, hackAuthors, lengthText });
                                 break;
                             }
                         }
@@ -804,8 +834,16 @@ namespace SMW_Data
                                 string name = item["name"].ToString();
                                 if (name.ToLower() == hackName.ToLower())
                                 {
+                                    hackData.Clear();
+                                    string hack_Name = name;
+
+                                    string hackAuthorsArray = item["authors"].ToString();                   //user[]
+                                    string[] authorsArray = JArray.Parse(hackAuthorsArray).Select(author => author["name"].ToString()).ToArray();
+                                    string hackAuthors = string.Join(", ", authorsArray);
+
                                     string length = item["fields"]["length"].ToString();
                                     lengthText = length.Replace(" exit(s)", string.Empty).Trim();
+                                    hackData.AddRange(new string[] { hack_Name, hackAuthors, lengthText });
                                     break;
                                 }
                             }
@@ -814,7 +852,7 @@ namespace SMW_Data
                 }
             }
 
-            return lengthText;
+            return hackData.ToArray();
         }
 
         static async Task<string[]> SMWCentralAPICall2(string hackName)
