@@ -341,6 +341,8 @@ namespace SMW_Data
             if (colorWindow.ColorOK)
             {
                 GridMain.Background = colorWindow.ChangeBackgroundColor;
+                GridHackName.Background = colorWindow.ChangeBackgroundColor;
+                GridCreators.Background = colorWindow.ChangeBackgroundColor;
                 Label_Hack.Foreground = colorWindow.ChangeTextColor;
                 Label_Creator.Foreground = colorWindow.ChangeTextColor;
                 Label_LevelDeathCount.Foreground = colorWindow.ChangeTextColor;
@@ -361,7 +363,6 @@ namespace SMW_Data
 
                 CurrentBackgroundColor = (SolidColorBrush)colorWindow.NewBackgroundColor;
                 CurrentTextColor = (SolidColorBrush)colorWindow.NewTextColor;
-
             }
         }
 
@@ -1016,6 +1017,16 @@ namespace SMW_Data
         private void Button_TimersStartStop_MouseLeave(object sender, MouseEventArgs e)
         {
             Button_TimersStartStop.Background = Brushes.Lime;
+        }
+
+        private void MenuItem_Click_Timers(object sender, RoutedEventArgs e)
+        {
+            TimerWindow timerWindow = new(this);
+            timerWindow.ShowDialog();
+            if (timerWindow.TimerOK)
+            {
+
+            }
         }
     }
 }

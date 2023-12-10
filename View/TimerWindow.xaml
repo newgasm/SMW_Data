@@ -1,0 +1,31 @@
+﻿<Window x:Name="Window3" x:Class="SMW_Data.View.TimerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SMW_Data.View"
+        mc:Ignorable="d" WindowStartupLocation="CenterOwner"
+        Title="Timer Settings" Height="180" Width="250" ResizeMode="NoResize">
+    <Grid Background="White">
+        <Label x:Name="LabelLevelAccuracy" Content="Level Accuracy:" HorizontalAlignment="Left" Margin="0,14,0,0" VerticalAlignment="Top" FontWeight="Bold" HorizontalContentAlignment="Right" Width="106" FontSize="10"/>
+        <ComboBox x:Name="ComboBoxLevelAccuracy" Margin="106,15,15,107" FontSize="10" Text="Milliseconds (0.00)">
+            <ComboBoxItem Content="Milliseconds (0.00)"/>
+            <ComboBoxItem Content="Milliseconds (0.0)"/>
+            <ComboBoxItem Content="Seconds"/>
+        </ComboBox>
+        <Label x:Name="LabelLastLevelAccuracy" Content="Last Level Accuracy:" HorizontalAlignment="Left" Margin="0,44,0,0" VerticalAlignment="Top" FontWeight="Bold" HorizontalContentAlignment="Right" Width="106" FontSize="10"/>
+        <ComboBox x:Name="ComboBoxLastLevelAccuracy" Margin="106,45,15,77" FontSize="10" Text="Milliseconds (0.00)">
+            <ComboBoxItem Content="Milliseconds (0.00)" FontSize="10"/>
+            <ComboBoxItem Content="Milliseconds (0.0)" FontSize="10"/>
+            <ComboBoxItem Content="Seconds" FontSize="10"/>
+        </ComboBox>
+        <Label x:Name="TotalAccuracy" Content="Total Accuracy:" HorizontalAlignment="Left" VerticalAlignment="Top" FontWeight="Bold" HorizontalContentAlignment="Right" Width="106" FontSize="10" Margin="0,73,0,0"/>
+        <ComboBox x:Name="ComboBoxTotalAccuracy" Margin="106,72,15,50" FontSize="10" Text="Milliseconds (0.00)">
+            <ComboBoxItem Content="Milliseconds (0.00)" FontSize="10"/>
+            <ComboBoxItem Content="Milliseconds (0.0)" FontSize="10"/>
+            <ComboBoxItem Content="Seconds" FontSize="10"/>
+        </ComboBox>
+        <Button x:Name="ButtonTimerOK" Content="OK" HorizontalAlignment="Left" Margin="49,111,0,0" VerticalAlignment="Top" Width="65" FontWeight="Bold" Click="ButtonTimerOK_Click"/>
+        <Button x:Name="ButtonTimerCancel" Content="Cancel" HorizontalAlignment="Left" Margin="134,111,0,0" VerticalAlignment="Top" Width="65" FontWeight="Bold" Click="ButtonTimerCancel_Click"/>
+    </Grid>
+</Window>

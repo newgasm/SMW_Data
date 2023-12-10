@@ -39,7 +39,9 @@
             <!--Header Menu-->
             <Menu>
                 <MenuItem Grid.Row="0" Header="File" FontSize="16">
-                    <MenuItem Header="Colors" Click="MenuItem_Click_Colors">
+                    <MenuItem Header="Color Settings" Click="MenuItem_Click_Colors">
+                    </MenuItem>
+                    <MenuItem Header="Timer Settings" Click="MenuItem_Click_Timers">
                     </MenuItem>
                     <MenuItem Header="Exit" Click="MenuItem_Click_Exit">
                     </MenuItem>
@@ -75,7 +77,7 @@
             <Label x:Name="Label_LevelTime" Content="Level Time:" HorizontalAlignment="Left" Margin="10,16,0,0" VerticalAlignment="Top" FontSize="24" Height="46" Width="136" HorizontalContentAlignment="Center" Foreground="White"/>
             <TextBlock x:Name="TextBlock_LevelTime" HorizontalAlignment="Left" Margin="152,22,0,0" VerticalAlignment="Top" Height="34" Width="152" FontSize="24" Foreground="White" Text="0.00"/>
             <!--Last Level Time-->
-            <Label x:Name="Label_LastLevelTime" Content="Last Level:" HorizontalAlignment="Left" Margin="27,54,0,0" VerticalAlignment="Top" FontSize="18" Height="40" Width="136" HorizontalContentAlignment="Center" Foreground="White"/>
+            <Label x:Name="Label_LastLevelTime" Content="Last Level:" HorizontalAlignment="Left" Margin="27,56,0,0" VerticalAlignment="Top" FontSize="18" Height="40" Width="136" HorizontalContentAlignment="Center" Foreground="White"/>
             <TextBlock x:Name="TextBlock_LastLevelTime" HorizontalAlignment="Left" Margin="153,62,0,0" VerticalAlignment="Top" Height="22" Width="152" FontSize="18" Foreground="White" Text="0.00"/>
             <!--Total Time-->
             <Label x:Name="Label_TotalTime" Content="Total Time:" HorizontalAlignment="Left" Margin="10,88,0,0" VerticalAlignment="Top" FontSize="24" Height="46" Width="136" HorizontalContentAlignment="Center" Foreground="White"/>
