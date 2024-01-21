@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using HtmlAgilityPack;
 using System.IO.Ports;
+using System.Windows.Media.Imaging;
 
 namespace SMW_Data
 {
@@ -20,6 +21,8 @@ namespace SMW_Data
     {
         public SolidColorBrush CurrentBackgroundColor { get; set; }
         public SolidColorBrush CurrentTextColor { get; set; }
+        
+        public BitmapImage NewDeathImage;
 
         private static int TotalDeathCount;
         private static int LevelDeathCount;
@@ -72,12 +75,15 @@ namespace SMW_Data
             InitializeComponent();
             CurrentBackgroundColor = (SolidColorBrush)GridMain.Background;
             CurrentTextColor = (SolidColorBrush)Label_LevelDeathCount.Foreground;
+            Image_MarioDeath1.Source = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/SMW.png"));
+            Image_MarioDeath2.Source = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/SMW.png"));
             TextBlock_SwitchCount.Visibility = Visibility.Collapsed;
             InitializeWebSocket();
         }
 
         private void InitializeWebSocket()
         {
+            // Don't know why switch count does not always work (seems to work only on startup)
             GreenSwitchActivated = false;
             YellowSwitchActivated = false;
             RedSwitchActivated = false;
@@ -1026,6 +1032,37 @@ namespace SMW_Data
             if (timerWindow.TimerOK)
             {
 
+            }
+        }
+
+        private void MenuItem_Click_DeathImage(object sender, RoutedEventArgs e)
+        {
+            DeathImageWindow deathImageWindow = new(this);
+            deathImageWindow.ShowDialog();
+            if (deathImageWindow.DeathImageOK)
+            {
+                switch (deathImageWindow.ComboBoxDeathImage.SelectedIndex)
+                {
+
+                    case 0:
+                        NewDeathImage = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/SMB1.png"));
+                        //Image_MarioDeath.Source = new BitmapImage(new Uri("SMB1.png", UriKind.Relative));
+                        break;
+                    case 1:
+                        NewDeathImage = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/SMB2.png"));
+                        break;
+                    case 2:
+                        NewDeathImage = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/SMB3.png"));
+                        break;
+                    case 3:
+                        NewDeathImage = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/SMW.png"));
+                        break;
+                    case 4:
+                        NewDeathImage = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/Paper Mario.png"));
+                        break;
+                }
+                Image_MarioDeath1.Source = NewDeathImage;
+                Image_MarioDeath2.Source = NewDeathImage;
             }
         }
     }

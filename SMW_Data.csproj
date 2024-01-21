@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <None Remove="deathmario.png" />
+    <None Remove="SMB1.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="deathmario.png" />
+    <Resource Include="SMB1.png" />
   </ItemGroup>
 
 </Project>

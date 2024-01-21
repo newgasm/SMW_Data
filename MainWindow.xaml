@@ -43,6 +43,8 @@
                     </MenuItem>
                     <MenuItem Header="Timer Settings" Click="MenuItem_Click_Timers">
                     </MenuItem>
+                    <MenuItem Header="Mario Death Image" Click="MenuItem_Click_DeathImage">
+                    </MenuItem>
                     <MenuItem Header="Exit" Click="MenuItem_Click_Exit">
                     </MenuItem>
                 </MenuItem>
@@ -67,11 +69,11 @@
             </Grid.ColumnDefinitions>
             <!--Level Death Counts-->
             <Label x:Name="Label_LevelDeathCount" Content="Level&#xA;Deaths" HorizontalAlignment="Left" Margin="289,18,0,0" VerticalAlignment="Top" FontSize="16" Height="66" Width="86" HorizontalContentAlignment="Center" Foreground="White"/>
-            <Image x:Name="Image_MarioDeath1" HorizontalAlignment="Left" Margin="364,21,0,0" VerticalAlignment="Top" Source="/deathmario.png" Height="50" Width="50" Grid.ColumnSpan="2" />
+            <Image x:Name="Image_MarioDeath1" HorizontalAlignment="Left" Margin="364,21,0,0" VerticalAlignment="Top" Source="/SMW.png" Height="50" Width="50" Grid.ColumnSpan="2" />
             <TextBlock x:Name="TextBlock_LevelDeathCount" HorizontalAlignment="Left" Margin="428,1,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Height="73" Width="231" FontSize="60" FontWeight="Bold" Foreground="White" Grid.Column="1"/>
             <!--Total Death Counts-->
             <Label x:Name="Label_TotalDeathCount" Content="Total&#xA;Deaths" HorizontalAlignment="Left" Margin="289,74,0,0" VerticalAlignment="Top" FontSize="16" Height="62" Width="86" HorizontalContentAlignment="Center" Foreground="White"/>
-            <Image x:Name="Image_MarioDeath2" HorizontalAlignment="Left" Margin="364,80,0,0" VerticalAlignment="Top" Source="/deathmario.png" Height="50" Width="50" Grid.ColumnSpan="2"/>
+            <Image x:Name="Image_MarioDeath2" HorizontalAlignment="Left" Margin="364,80,0,0" VerticalAlignment="Top" Source="/SMW.png" Height="50" Width="50" Grid.ColumnSpan="2"/>
             <TextBlock x:Name="TextBlock_TotalDeathCount" HorizontalAlignment="Left" Margin="428,62,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Height="70" Width="231" FontSize="60" FontWeight="Bold" Foreground="White" Grid.Column="1"/>
             <!--Level Time-->
             <Label x:Name="Label_LevelTime" Content="Level Time:" HorizontalAlignment="Left" Margin="10,16,0,0" VerticalAlignment="Top" FontSize="24" Height="46" Width="136" HorizontalContentAlignment="Center" Foreground="White"/>
