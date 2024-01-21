@@ -35,6 +35,8 @@ namespace SMW_Data
         public bool BlueSwitchActivated;
         public bool RedSwitchActivated;
 
+        public int ExitCountCurrent;
+
         private bool isFirstMessageReceived = false;
 
         static WebSocket ws;
@@ -280,7 +282,7 @@ namespace SMW_Data
         private void ProcessMemoryAddressResponse_ExitCounter(byte[] rawData)
         {
             string MemoryAddressValue_ExitCounter = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 5, 2);
-            int ExitCountCurrent = Convert.ToInt32(MemoryAddressValue_ExitCounter, 16);
+            ExitCountCurrent = Convert.ToInt32(MemoryAddressValue_ExitCounter, 16);
 
             Application.Current.Dispatcher.BeginInvoke(() =>
             {
@@ -1064,6 +1066,23 @@ namespace SMW_Data
                 Image_MarioDeath1.Source = NewDeathImage;
                 Image_MarioDeath2.Source = NewDeathImage;
             }
+        }
+
+        private void Button_ManualSplit_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Dispatcher.BeginInvoke(() =>
+            {
+                LevelDeathCount = Int32.Parse(TextBlock_LevelDeathCount.Text);
+                LevelDeathCount = 0;
+                TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
+                CounterRange();
+
+                TextBlock_LastLevelTime.Text = TextBlock_LevelTime.Text;
+
+            });
+
+            previousExitCounterValue = ExitCountCurrent;
+            startTimeLevel = DateTime.Now;
         }
     }
 }
