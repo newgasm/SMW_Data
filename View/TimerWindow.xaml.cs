@@ -16,11 +16,15 @@ namespace SMW_Data.View
             Owner = main;
             mainWindow = main;
             InitializeComponent();
-            
-            ComboBoxLevelAccuracy.SelectedItem = ComboBoxLevelAccuracy.Items[0];
-            ComboBoxLastLevelAccuracy.SelectedItem = ComboBoxLastLevelAccuracy.Items[0];
-            ComboBoxTotalAccuracy.SelectedItem = ComboBoxTotalAccuracy.Items[0];
+/*            if()
+            {
 
+            }
+            else
+            {*/
+                ComboBoxLevelAccuracy.SelectedItem = ComboBoxLevelAccuracy.Items[0];
+                ComboBoxTotalAccuracy.SelectedItem = ComboBoxTotalAccuracy.Items[0];
+            //}
         }
         private void ButtonTimerOK_Click(object sender, RoutedEventArgs e)
         {

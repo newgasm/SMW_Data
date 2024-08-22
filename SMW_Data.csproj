@@ -13,7 +13,11 @@
 
   <ItemGroup>
     <None Remove="deathmario.png" />
+    <None Remove="Paper Mario.png" />
     <None Remove="SMB1.png" />
+    <None Remove="SMB2.png" />
+    <None Remove="SMB3.png" />
+    <None Remove="SMW.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,7 +32,24 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="SMB1.png" />
+    <Resource Include="SMB1.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="SMB2.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="SMB3.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Content Include="SMW.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Paper Mario.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
 </Project>
