@@ -376,6 +376,10 @@ namespace SMW_Data
                     TextBlock_ExitCountCurrent.Text = "??";
                     TextBlock_SwitchCount.Text = "+0";
                     SwitchesActivated = 0;
+                    GreenSwitchActivated = false;
+                    YellowSwitchActivated = false;
+                    BlueSwitchActivated = false;
+                    RedSwitchActivated = false;
                 });
             }
         }
