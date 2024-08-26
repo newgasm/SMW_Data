@@ -1,0 +1,7 @@
+{
+    "name" : "SMW Data",
+    "description" : "An app to track SMW data (timer, death counts, hack info, etc.)",
+    "executable" : "SMW_Data",
+    "icon" : "icon.ico",
+    "QtApp" : false
+}

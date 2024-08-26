@@ -52,4 +52,10 @@
     </Resource>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="qusb2snesapp.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -141,10 +141,9 @@
             <Button x:Name="Button_UpdateHackInfo" Content="Update Hack Info" HorizontalAlignment="Left" Margin="17,276,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_UpdateHackInfo_Click" Width="138" Height="31"/>
             <Button x:Name="Button_GetHackData" Content="See Hack Data" HorizontalAlignment="Left" Margin="164,276,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_GetHackData_Click" Width="125" Height="31"/>
             <!--WebSocket-->
-            <Button x:Name="Button_Connect" Content="Connect to WebSocket" HorizontalAlignment="Left" Margin="494,290,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_Connect_Click" Width="164" Height="25"/>
-            <Label x:Name="Label_COMPort" Content="COM Port:" HorizontalAlignment="Left" Margin="358,284,0,0" VerticalAlignment="Top" FontSize="18" Height="40" Width="100" HorizontalContentAlignment="Center" Foreground="White" FontWeight="Bold"/>
-            <TextBox x:Name="TextBox_COMPort" HorizontalAlignment="Left" Margin="458,290,0,0" Text="3" VerticalAlignment="Top" Width="30" FontSize="16" Height="25" TextAlignment="Center" MaxLines="1" MaxLength="3" VerticalContentAlignment="Center"/>
-            <Button x:Name="Button_ManualSplit" Content="Level Complete (Manual Split)" HorizontalAlignment="Left" Margin="17,162,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="12" Click="Button_ManualSplit_Click" Width="193" Height="28" Background="Cyan" Style="{StaticResource NoHoverButtonStyle}"/>
+            <Button x:Name="Button_Connect" Content="Connect to WebSocket" HorizontalAlignment="Left" Margin="495,279,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_Connect_Click" Width="164" Height="25"/>
+            <TextBlock x:Name="TextBlock_Connection" HorizontalAlignment="Left" Margin="427,304,0,0" VerticalAlignment="Top" Height="20" Width="232" FontSize="12" FontWeight="Bold" Foreground="White" Text="" TextAlignment="Right"/>
+            <Button x:Name="Button_ManualSplit" Content="Level Complete (Manual Split)" HorizontalAlignment="Left" Margin="17,162,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="10" Click="Button_ManualSplit_Click" Width="193" Height="28" Background="Cyan" Style="{StaticResource NoHoverButtonStyle}"/>
         </Grid>
         <!--Information Footer-->
         <Grid x:Name="GridFooter" Grid.Row="5" Background="#AA2A2A2A">

@@ -14,6 +14,7 @@ using Newtonsoft.Json.Linq;
 using HtmlAgilityPack;
 using System.IO.Ports;
 using System.Windows.Media.Imaging;
+using System.Windows.Forms.VisualStyles;
 
 namespace SMW_Data
 {
@@ -30,13 +31,12 @@ namespace SMW_Data
         private static int TotalDeathCount;
         private static int LevelDeathCount;
         public bool DeathState;
-        public bool itWorked;
 
         private static int SwitchesActivated = 0;
-        public bool GreenSwitchActivated;
-        public bool YellowSwitchActivated;
-        public bool BlueSwitchActivated;
-        public bool RedSwitchActivated;
+        public bool GreenSwitchActivated = false;
+        public bool YellowSwitchActivated = false;
+        public bool BlueSwitchActivated = false;
+        public bool RedSwitchActivated = false;
 
         public int ExitCountCurrent;
 
@@ -51,6 +51,11 @@ namespace SMW_Data
         private TimeSpan currentTimeTotal = TimeSpan.Zero;
         private TimeSpan elapsedTotal = TimeSpan.Zero;
         private TimeSpan elapsedLevel = TimeSpan.Zero;
+
+        static private string device = null;
+        static private String[] devices = null;
+        private TaskCompletionSource<bool> deviceListReceived = new TaskCompletionSource<bool>();
+        private bool deviceListProcessed;
 
         public string MemoryAddressValue_DeathCheck;
         static readonly int MemoryAddress_DeathCheck = 0x7E0071;
@@ -90,21 +95,25 @@ namespace SMW_Data
             InitializeWebSocket();
         }
 
-        private void InitializeWebSocket()
+        private async void InitializeWebSocket()
         {
             // Don't know why switch count does not always work (seems to work only on startup)
-            GreenSwitchActivated = false;
-            YellowSwitchActivated = false;
-            RedSwitchActivated = false;
-            BlueSwitchActivated = false;
-            SwitchesActivated = 0;
+            /*          GreenSwitchActivated = false;
+                        YellowSwitchActivated = false;
+                        RedSwitchActivated = false;
+                        BlueSwitchActivated = false;
+                        SwitchesActivated = 0;*/
+
+            if (ws != null)
+            {
+                ws.Close();
+                ws = null;
+            }
 
             ws = new WebSocket("ws://localhost:8080");
 
-            ws.OnOpen += (sender, e) =>
+            ws.OnOpen += async (sender, e) =>
             {
-                //MessageBox.Show("WebSocket connected");
-
                 var deviceListRequest = new
                 {
                     Opcode = "DeviceList",
@@ -112,20 +121,24 @@ namespace SMW_Data
                 };
                 ws.Send(JsonConvert.SerializeObject(deviceListRequest));
 
-                string comPort = "COM" + TextBox_COMPort.Text;
-
-                //string[] availablePorts = SerialPort.GetPortNames();
-
-                //foreach (string comPort in availablePorts)
-                //{
-                var attachRequest = new
+                deviceListProcessed = await deviceListReceived.Task;
+                if (deviceListProcessed && !string.IsNullOrEmpty(device))
                 {
-                    Opcode = "Attach",
-                    Space = "SNES",
-                    Operands = new[] { $"SD2SNES {comPort}" }
-                };
-                ws.Send(JsonConvert.SerializeObject(attachRequest));
-                //}
+                    AttachDevice();
+                    _ = Application.Current.Dispatcher.BeginInvoke(() =>
+                    {
+                        TextBlock_Connection.Text = "Connected to: " + device;
+                        TextBlock_Footer.Text = "Connected to WebSocket";
+                    });
+                }
+                else
+                {
+                    _ = Application.Current.Dispatcher.BeginInvoke(() =>
+                    {
+                        TextBlock_Connection.Text = "No Device Found";
+                        TextBlock_Footer.Text = "Not Connected to WebSocket";
+                    });
+                }
 
                 timerSNES = new DispatcherTimer();
                 timerSNES.Interval = TimeSpan.FromMilliseconds(16); // 16ms is approximately 60fps
@@ -137,7 +150,6 @@ namespace SMW_Data
             {
                 if (isFirstMessageReceived)
                 {
-                    //MessageBox.Show(BitConverter.ToString(e.RawData));
                     ProcessMemoryAddressResponse_DeathCheck(e.RawData);
                     ProcessMemoryAddressResponse_ExitCounter(e.RawData);
                     ProcessMemoryAddressResponse_InGame(e.RawData);
@@ -146,6 +158,26 @@ namespace SMW_Data
                 else
                 {
                     isFirstMessageReceived = true;
+                    var messageCheckForDevice = JsonConvert.DeserializeObject<dynamic>(e.Data);
+                    devices = messageCheckForDevice.Results.ToObject<string[]>();
+                    if (devices != null && devices.Length > 0)
+                    {
+                        device = devices[0].ToString();
+                        deviceListReceived.SetResult(true);
+                        Application.Current.Dispatcher.BeginInvoke(() =>
+                        {
+                            TextBlock_Connection.Text = "Connected to: " + device;
+                        });
+                    }
+                    else
+                    {
+                        deviceListReceived.SetResult(false);
+                        Application.Current.Dispatcher.BeginInvoke(() =>
+                        {
+                            TextBlock_Connection.Text = "No Device Found";
+                            TextBlock_Footer.Text = "Not Connected to WebSocket";
+                        });
+                    }
                 }
             };
 
@@ -169,13 +201,42 @@ namespace SMW_Data
             try
             {
                 ws.Connect();
-                TextBlock_Footer.Text = "Connected to WebSocket";
             }
             catch (Exception ex)
             {
                 //MessageBox.Show("WebSocket connection failed: " + ex.Message);
                 TextBlock_Footer.Text = "Not Connected to WebSocket";
+                TextBlock_Connection.Text = "No Device Found";
             }
+        }
+
+        public void AttachDevice()
+        {
+            if (!string.IsNullOrEmpty(device))
+            {
+            var attachRequest = new
+                {
+                    Opcode = "Attach",
+                    Space = "SNES",
+                    Operands = new[] { device }
+                };
+                ws.Send(JsonConvert.SerializeObject(attachRequest));
+            }
+            else
+            {
+                //Console.WriteLine("Device not available yet.");
+            }
+        }
+
+        private void Button_Connect_Click(object sender, RoutedEventArgs e)
+        {
+            isFirstMessageReceived = false;
+            deviceListProcessed = false;
+            devices = null;
+            device = null;
+            timerSNES.Stop();
+            deviceListReceived = new TaskCompletionSource<bool>();
+            InitializeWebSocket();
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -191,6 +252,7 @@ namespace SMW_Data
             catch
             {
                 TextBlock_Footer.Text = "Not Connected to WebSocket";
+                TextBlock_Connection.Text = "No Device Found";
             }
         }
 
@@ -1388,12 +1450,6 @@ namespace SMW_Data
             }
 
             return hackData.ToArray();
-        }
-
-        private void Button_Connect_Click(object sender, RoutedEventArgs e)
-        {
-            ws.Close();
-            InitializeWebSocket();
         }
 
         private void TextBox_HackName_GotFocus(object sender, RoutedEventArgs e)
