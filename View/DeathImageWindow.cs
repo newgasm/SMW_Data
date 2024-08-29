@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using WinForms = System.Windows.Forms;
 
@@ -18,31 +19,36 @@ namespace SMW_Data.View
             Owner = main;
             mainWindow = main;
             InitializeComponent();
-            ComboBoxDeathImage.SelectedItem = ComboBoxDeathImage.Items[0];
+
+            int savedIndex = mainWindow.SelectedDeathImageIndex;
+            ComboBoxDeathImage.SelectedIndex = savedIndex;
+            SetImageBasedOnSelection(savedIndex);
         }
 
         private void ComboBoxDeathImage_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            switch (ComboBoxDeathImage.SelectedIndex)
+            int selectedIndex = ComboBoxDeathImage.SelectedIndex;
+            SetImageBasedOnSelection(selectedIndex);
+        }
+
+        private void SetImageBasedOnSelection(int selectedIndex)
+        {
+            switch (selectedIndex)
             {
                 case 0:
-                    Image_MarioDeath.Source = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/SMB1.png"));
-                    //Image_MarioDeath.Source = new BitmapImage(new Uri("SMB1.png", UriKind.Relative));
+                    Image_MarioDeath.Source = new BitmapImage(new Uri("pack://application:,,,/images/SMB1.png"));
                     break;
                 case 1:
-                    Image_MarioDeath.Source = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/SMB2.png"));
+                    Image_MarioDeath.Source = new BitmapImage(new Uri("pack://application:,,,/images/SMB3.png"));
                     break;
                 case 2:
-                    Image_MarioDeath.Source = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/SMB3.png"));
+                    Image_MarioDeath.Source = new BitmapImage(new Uri("pack://application:,,,/images/SMW.png"));
                     break;
                 case 3:
-                    Image_MarioDeath.Source = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/SMW.png"));
-                    break;
-                case 4:
-                    Image_MarioDeath.Source = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/Paper Mario.png"));
+                    Image_MarioDeath.Source = new BitmapImage(new Uri("pack://application:,,,/images/Paper Mario.png"));
                     break;
                 default:
-                    Image_MarioDeath.Source = new BitmapImage(new Uri("C:/Users/newgasm/Desktop/Programming/C#/SMW Data/SMW.png"));
+                    Image_MarioDeath.Source = new BitmapImage(new Uri("pack://application:,,,/images/SMW.png"));
                     break;
             }
         }
@@ -50,7 +56,7 @@ namespace SMW_Data.View
         private void ButtonDeathImageOK_Click(object sender, RoutedEventArgs e)
         {
             DeathImageOK = true;
-
+            mainWindow.SelectedDeathImageIndex = ComboBoxDeathImage.SelectedIndex;
             this.Close();
         }
 

@@ -13,6 +13,11 @@
 
   <ItemGroup>
     <None Remove="deathmario.png" />
+    <None Remove="images\Paper Mario.png" />
+    <None Remove="images\SMB1.png" />
+    <None Remove="images\SMB2.png" />
+    <None Remove="images\SMB3.png" />
+    <None Remove="images\SMW.png" />
     <None Remove="Paper Mario.png" />
     <None Remove="SMB1.png" />
     <None Remove="SMB2.png" />
@@ -25,6 +30,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="images\Paper Mario.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.11.54" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.IO.Ports" Version="7.0.0" />
@@ -32,22 +43,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="SMB1.png">
+    <Resource Include="images\SMB1.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="SMB2.png">
+    <Resource Include="images\SMB2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="SMB3.png">
+    <Resource Include="images\SMB3.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Content Include="SMW.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Paper Mario.png">
+    <Resource Include="images\SMW.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

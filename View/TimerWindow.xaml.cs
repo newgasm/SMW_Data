@@ -8,7 +8,6 @@ namespace SMW_Data.View
     public partial class TimerWindow : Window
     {
         public bool TimerOK { get; set; }
-
         private readonly MainWindow mainWindow;
 
         public TimerWindow(MainWindow main)
@@ -16,19 +15,14 @@ namespace SMW_Data.View
             Owner = main;
             mainWindow = main;
             InitializeComponent();
-/*            if()
-            {
-
-            }
-            else
-            {*/
-                ComboBoxLevelAccuracy.SelectedItem = ComboBoxLevelAccuracy.Items[0];
-                ComboBoxTotalAccuracy.SelectedItem = ComboBoxTotalAccuracy.Items[0];
-            //}
+            ComboBoxLevelAccuracy.SelectedIndex = mainWindow.SelectedLevelAccuracyIndex;
+            ComboBoxTotalAccuracy.SelectedIndex = mainWindow.SelectedTotalAccuracyIndex;
         }
         private void ButtonTimerOK_Click(object sender, RoutedEventArgs e)
         {
             TimerOK = true;
+            mainWindow.SelectedLevelAccuracyIndex = ComboBoxLevelAccuracy.SelectedIndex;
+            mainWindow.SelectedTotalAccuracyIndex = ComboBoxTotalAccuracy.SelectedIndex;
             this.Close();
         }
 

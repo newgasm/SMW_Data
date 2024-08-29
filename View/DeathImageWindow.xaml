@@ -8,13 +8,14 @@
         Title="Mario Death Image" Height="175" Width="250" ResizeMode="NoResize">
     <Grid Background="White">
         <Label x:Name="LabelImage" Content="Image:" HorizontalAlignment="Left" Margin="80,10,0,0" VerticalAlignment="Top" FontWeight="Bold" HorizontalContentAlignment="Right" Width="56" FontSize="14"/>
-        <Image x:Name="Image_MarioDeath" HorizontalAlignment="Left" Margin="136,10,0,0" VerticalAlignment="Top" Source="/SMB1.png" Height="30" Width="30" />
+        <Image x:Name="Image_MarioDeath" HorizontalAlignment="Left" Margin="136,10,0,0" VerticalAlignment="Top" Source="/images/SMW.png" Height="30" Width="30" />
         <ComboBox x:Name="ComboBoxDeathImage" Margin="48,52,56,66" FontSize="10" SelectionChanged="ComboBoxDeathImage_SelectionChanged">
             <ComboBoxItem Content="Super Mario Bros. 1" FontSize="10"/>
-            <ComboBoxItem Content="Super Mario Bros. 2" FontSize="10"/>
             <ComboBoxItem Content="Super Mario Bros. 3" FontSize="10"/>
             <ComboBoxItem Content="Super Mario World" FontSize="10"/>
             <ComboBoxItem Content="Paper Mario" FontSize="10"/>
+            <!--
+            <ComboBoxItem Content="Super Mario Bros. 2" FontSize="10"/>
             <ComboBoxItem Content="PrincessBunBun" FontSize="10"/>
             <ComboBoxItem Content="Things.smc" FontSize="10"/>
             <ComboBoxItem Content="Baby Mario" FontSize="10"/>
@@ -38,6 +39,7 @@
             <ComboBoxItem Content="Panga" FontSize="10"/>
             <ComboBoxItem Content="????" FontSize="10"/>
             <ComboBoxItem Content="????" FontSize="10"/>
+            -->
         </ComboBox>        
         <Button x:Name="ButtonDeathImageOK" Content="OK" HorizontalAlignment="Left" Margin="48,89,0,0" VerticalAlignment="Top" Width="65" FontWeight="Bold" Click="ButtonDeathImageOK_Click" RenderTransformOrigin="0.546,-2.388"/>
         <Button x:Name="ButtonDeathImageCancel" Content="Cancel" HorizontalAlignment="Left" Margin="129,89,0,0" VerticalAlignment="Top" Width="65" FontWeight="Bold" Click="ButtonDeathImageCancel_Click" RenderTransformOrigin="0.499,-0.353"/>
