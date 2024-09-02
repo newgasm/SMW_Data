@@ -22,6 +22,8 @@ namespace SMW_Data
     {
         public SolidColorBrush CurrentBackgroundColor { get; set; }
         public SolidColorBrush CurrentTextColor { get; set; }
+        public FontFamily CurrentFontTitle { get; set; } = new FontFamily("Segoe UI");
+        public FontFamily CurrentFontAuthor { get; set; } = new FontFamily("Segoe UI");
         public int SelectedLevelAccuracyIndex { get; set; } = 0;
         public int SelectedTotalAccuracyIndex { get; set; } = 0;
         public int SelectedDeathImageIndex { get; set; } = 2;
@@ -44,6 +46,10 @@ namespace SMW_Data
         public int ExitCountCurrent;
 
         private bool isFirstMessageReceived = false;
+        private List<string> receivedDataBuffer = new List<string>();
+        private string message;
+        private string fullMessage;
+        private int expectedDataLength = 14;
 
         static WebSocket ws;
         private DispatcherTimer timerSNES;
@@ -77,7 +83,6 @@ namespace SMW_Data
         static readonly int adjMemoryAddress_SwitchesActivated = 0xF50000 + (MemoryAddress_SwitchesActivated - 0x7E0000);
         static readonly string AdjustedMemoryAddress_SwitchesActivated = adjMemoryAddress_SwitchesActivated.ToString("X");
 
-
         public string MemoryAddressValue_InGame;
         static readonly int MemoryAddress_InGame = 0x7E1F15;
         static readonly int adjMemoryAddress_InGame = 0xF50000 + (MemoryAddress_InGame - 0x7E0000);
@@ -88,6 +93,9 @@ namespace SMW_Data
             InitializeComponent();
             CurrentBackgroundColor = (SolidColorBrush)GridMain.Background;
             CurrentTextColor = (SolidColorBrush)Label_LevelDeathCount.Foreground;
+
+            CurrentFontTitle = (FontFamily)Label_Hack.FontFamily;
+            CurrentFontAuthor = (FontFamily)Label_Creator.FontFamily;
 
             LevelAccuracy = "Milliseconds (0.00)";
             TotalAccuracy = "Milliseconds (0.00)";
@@ -147,10 +155,23 @@ namespace SMW_Data
             {
                 if (isFirstMessageReceived)
                 {
-                    ProcessMemoryAddressResponse_DeathCheck(e.RawData);
-                    ProcessMemoryAddressResponse_ExitCounter(e.RawData);
-                    ProcessMemoryAddressResponse_InGame(e.RawData);
-                    ProcessMemoryAddressResponse_Switches(e.RawData);
+                    message = BitConverter.ToString(e.RawData).Replace("-", "");
+                    receivedDataBuffer.Add(message);
+                    fullMessage = string.Join("", receivedDataBuffer);
+
+                    if (fullMessage.Length < expectedDataLength)
+                    {
+                        return;
+                    }
+
+                    if (fullMessage.Length == expectedDataLength)
+                    {
+                        ProcessMemoryAddressResponse_DeathCheck(fullMessage);
+                        ProcessMemoryAddressResponse_ExitCounter(fullMessage);
+                        ProcessMemoryAddressResponse_InGame(fullMessage);
+                        ProcessMemoryAddressResponse_Switches(fullMessage);
+                        receivedDataBuffer.Clear();
+                    }
                 }
                 else
                 {
@@ -273,31 +294,31 @@ namespace SMW_Data
             ws.Send(JsonConvert.SerializeObject(getAddressRequest));
         }
 
-        private void ProcessMemoryAddressResponse_Switches(byte[] rawData)
+        private void ProcessMemoryAddressResponse_Switches(string rawData)
         {
-
-            string MemoryAddressValue_GreenSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 20, 2);
+            //MessageBox.Show(BitConverter.ToString(rawData).Replace("-", "").Substring(12, 2));
+            string MemoryAddressValue_GreenSwitchActivated = rawData.Substring(0, 2);
             if (MemoryAddressValue_GreenSwitchActivated != "00" && GreenSwitchActivated == false)
             {
                 GreenSwitchActivated = true;
                 SwitchesActivated++;
             }
 
-            string MemoryAddressValue_YellowSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 17, 2);
+            string MemoryAddressValue_YellowSwitchActivated = rawData.Substring(2, 2);
             if (MemoryAddressValue_YellowSwitchActivated != "00" && YellowSwitchActivated == false)
             {
                 YellowSwitchActivated = true;
                 SwitchesActivated++;
             }
 
-            string MemoryAddressValue_BlueSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 14, 2);
+            string MemoryAddressValue_BlueSwitchActivated = rawData.Substring(4, 2);
             if (MemoryAddressValue_BlueSwitchActivated != "00" && BlueSwitchActivated == false)
             {
                 BlueSwitchActivated = true;
                 SwitchesActivated++;
             }
 
-            string MemoryAddressValue_RedSwitchActivated = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 11, 2);
+            string MemoryAddressValue_RedSwitchActivated = rawData.Substring(6, 2);
             if (MemoryAddressValue_RedSwitchActivated != "00" && RedSwitchActivated == false)
             {
                 RedSwitchActivated = true;
@@ -310,9 +331,9 @@ namespace SMW_Data
             });
         }
 
-        private void ProcessMemoryAddressResponse_DeathCheck(byte[] rawData)
+        private void ProcessMemoryAddressResponse_DeathCheck(string rawData)
         {
-            string MemoryAddressValue_DeathCheck = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 8, 2);
+            string MemoryAddressValue_DeathCheck = rawData.Substring(8, 2);
             if ((MemoryAddressValue_DeathCheck != "09") && (DeathState == true))
             {
                 DeathState = false;
@@ -335,9 +356,9 @@ namespace SMW_Data
             }
         }
 
-        private void ProcessMemoryAddressResponse_ExitCounter(byte[] rawData)
+        private void ProcessMemoryAddressResponse_ExitCounter(string rawData)
         {
-            string MemoryAddressValue_ExitCounter = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 5, 2);
+            string MemoryAddressValue_ExitCounter = rawData.Substring(10, 2);
             ExitCountCurrent = Convert.ToInt32(MemoryAddressValue_ExitCounter, 16);
 
             Application.Current.Dispatcher.BeginInvoke(() =>
@@ -363,9 +384,9 @@ namespace SMW_Data
             }
         }
 
-        private void ProcessMemoryAddressResponse_InGame(byte[] rawData)
+        private void ProcessMemoryAddressResponse_InGame(string rawData)
         {
-            string MemoryAddressValue_InGame = BitConverter.ToString(rawData).Substring(BitConverter.ToString(rawData).Length - 2);
+            string MemoryAddressValue_InGame = rawData.Substring(12, 2);
             if (MemoryAddressValue_InGame != "02")
             {
                 Application.Current.Dispatcher.BeginInvoke(() =>
@@ -1835,8 +1856,20 @@ namespace SMW_Data
 
             previousExitCounterValue = ExitCountCurrent;
             startTimeLevel = DateTime.Now;
-
         }
 
+        private void MenuItem_Click_Fonts(object sender, RoutedEventArgs e)
+        {
+            FontsWindow fontsWindow = new(this);
+            fontsWindow.ShowDialog();
+            if (fontsWindow.FontsOK)
+            {
+                CurrentFontTitle = fontsWindow.NewFontTitle;
+                CurrentFontAuthor = fontsWindow.NewFontAuthor;
+
+                Label_Hack.FontFamily = CurrentFontTitle;
+                Label_Creator.FontFamily = CurrentFontAuthor;
+            }
+        }
     }
 }

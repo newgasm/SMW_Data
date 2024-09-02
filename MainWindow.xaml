@@ -39,7 +39,9 @@
             <!--Header Menu-->
             <Menu>
                 <MenuItem Grid.Row="0" Header="File" FontSize="16">
-                    <MenuItem Header="Color Settings" Click="MenuItem_Click_Colors">
+                    <MenuItem Header="Colors" Click="MenuItem_Click_Colors">
+                    </MenuItem>
+                    <MenuItem Header="Fonts" Click="MenuItem_Click_Fonts">
                     </MenuItem>
                     <MenuItem Header="Timer Settings" Click="MenuItem_Click_Timers">
                     </MenuItem>
