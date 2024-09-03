@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Forms;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using WinForms = System.Windows.Forms;
+
 
 namespace SMW_Data.View
 {

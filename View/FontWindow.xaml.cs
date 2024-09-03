@@ -1,8 +1,5 @@
 ﻿using System.Windows;
 using System.Windows.Media;
-using System.ComponentModel;
-using WinForms = System.Windows.Forms;
-using System.Windows.Data;
 using System.Linq;
 
 namespace SMW_Data.View

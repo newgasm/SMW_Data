@@ -12,9 +12,8 @@ using WebSocketSharp;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using HtmlAgilityPack;
-using System.IO.Ports;
 using System.Windows.Media.Imaging;
-using System.Windows.Forms.VisualStyles;
+using System.Windows.Documents;
 
 namespace SMW_Data
 {
@@ -24,8 +23,8 @@ namespace SMW_Data
         public SolidColorBrush CurrentTextColor { get; set; }
         public FontFamily CurrentFontTitle { get; set; } = new FontFamily("Segoe UI");
         public FontFamily CurrentFontAuthor { get; set; } = new FontFamily("Segoe UI");
-        public int SelectedLevelAccuracyIndex { get; set; } = 0;
-        public int SelectedTotalAccuracyIndex { get; set; } = 0;
+        public int SelectedLevelAccuracyIndex { get; set; } = 1;
+        public int SelectedTotalAccuracyIndex { get; set; } = 1;
         public int SelectedDeathImageIndex { get; set; } = 2;
 
         public BitmapImage NewDeathImage;
@@ -61,6 +60,10 @@ namespace SMW_Data
         private TimeSpan currentTimeTotal = TimeSpan.Zero;
         private TimeSpan elapsedTotal = TimeSpan.Zero;
         private TimeSpan elapsedLevel = TimeSpan.Zero;
+        private string formattedTotalTimeA;
+        private string formattedTotalTimeB;
+        private string formattedLevelTimeA;
+        private string formattedLevelTimeB;
 
         static private string device = null;
         static private String[] devices = null;
@@ -100,6 +103,16 @@ namespace SMW_Data
             LevelAccuracy = "Milliseconds (0.00)";
             TotalAccuracy = "Milliseconds (0.00)";
 
+            TextBlock_LevelTime.Inlines.Clear();
+            TextBlock_LevelTime.Inlines.Add(new Run("0"));
+            TextBlock_LevelTime.Inlines.Add(new Run(".00") { FontSize = 18 });
+            TextBlock_LastLevelTime.Inlines.Clear();
+            TextBlock_LastLevelTime.Inlines.Add(new Run("0"));
+            TextBlock_LastLevelTime.Inlines.Add(new Run(".00") { FontSize = 12 });
+            TextBlock_TotalTime.Inlines.Clear();
+            TextBlock_TotalTime.Inlines.Add(new Run("0"));
+            TextBlock_TotalTime.Inlines.Add(new Run(".00") { FontSize = 18 });
+
             Image_MarioDeath1.Source = new BitmapImage(new Uri("pack://application:,,,/images/SMW.png"));
             Image_MarioDeath2.Source = new BitmapImage(new Uri("pack://application:,,,/images/SMW.png"));
 
@@ -107,7 +120,7 @@ namespace SMW_Data
             InitializeWebSocket();
         }
 
-        private async void InitializeWebSocket()
+        private void InitializeWebSocket()
         {
             if (ws != null)
             {
@@ -220,7 +233,7 @@ namespace SMW_Data
             {
                 ws.Connect();
             }
-            catch (Exception ex)
+            catch //(Exception ex)
             {
                 //MessageBox.Show("WebSocket connection failed: " + ex.Message);
                 TextBlock_Footer.Text = "Not Connected to WebSocket";
@@ -232,7 +245,7 @@ namespace SMW_Data
         {
             if (!string.IsNullOrEmpty(device))
             {
-            var attachRequest = new
+                var attachRequest = new
                 {
                     Opcode = "Attach",
                     Space = "SNES",
@@ -375,8 +388,45 @@ namespace SMW_Data
                     TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
                     CounterRange();
 
-                    TextBlock_LastLevelTime.Text = TextBlock_LevelTime.Text;
+                    // Record Last Level Time
+                    string lastLevelTime = TextBlock_LevelTime.Text;
+                    TextBlock_LastLevelTime.Inlines.Clear();
+                    int decimalIndex = lastLevelTime.IndexOf('.');
+                    if (decimalIndex >= 0)
+                    {
+                        string beforeDecimal = lastLevelTime.Substring(0, decimalIndex);
+                        string afterDecimal = lastLevelTime.Substring(decimalIndex);
+                        TextBlock_LastLevelTime.Inlines.Add(new Run(beforeDecimal));
+                        TextBlock_LastLevelTime.Inlines.Add(new Run(afterDecimal) { FontSize = 12 });
+                    }
+                    else
+                    {
+                        TextBlock_LastLevelTime.Inlines.Add(new Run(lastLevelTime));
+                    }
 
+                    // Reset Level Time to Zero
+                    if (LevelAccuracy == "Milliseconds (0.000)")
+                    {
+                        TextBlock_LevelTime.Inlines.Clear();
+                        TextBlock_LevelTime.Inlines.Add(new Run("0"));
+                        TextBlock_LevelTime.Inlines.Add(new Run(".000") { FontSize = 18 });
+                    }
+                    else if (LevelAccuracy == "Milliseconds (0.00)")
+                    {
+                        TextBlock_LevelTime.Inlines.Clear();
+                        TextBlock_LevelTime.Inlines.Add(new Run("0"));
+                        TextBlock_LevelTime.Inlines.Add(new Run(".00") { FontSize = 18 });
+                    }
+                    else if (LevelAccuracy == "Milliseconds (0.0)")
+                    {
+                        TextBlock_LevelTime.Inlines.Clear();
+                        TextBlock_LevelTime.Inlines.Add(new Run("0"));
+                        TextBlock_LevelTime.Inlines.Add(new Run(".0") { FontSize = 18 });
+                    }
+                    else if (LevelAccuracy == "Seconds")
+                    {
+                        TextBlock_LevelTime.Text = "0";
+                    }
                 });
 
                 previousExitCounterValue = ExitCountCurrent;
@@ -621,7 +671,7 @@ namespace SMW_Data
 
                 timer.Stop();
 
-                
+
 
                 //store currentTimeLevel and currentTimeTotal
                 //On restart, initialize the timer with these stored values instead of resetting them
@@ -639,29 +689,67 @@ namespace SMW_Data
         {
             TimeSpan elapsedTotal = DateTime.Now - startTimeTotal;
             TimeSpan elapsedLevel = DateTime.Now - startTimeLevel;
+            TextBlock_TotalTime.Inlines.Clear();
+            TextBlock_LevelTime.Inlines.Clear();
 
-            if (TotalAccuracy == "Milliseconds (0.00)")
+            if (TotalAccuracy == "Milliseconds (0.000)")
             {
                 if (Convert.ToInt32(elapsedTotal.ToString(@"dd")) != 0)
                 {
                     int totalHours = (int)elapsedTotal.TotalHours;
-                    TextBlock_TotalTime.Text = totalHours + ":" + elapsedTotal.ToString(@"mm\:ss\.ff");
+                    formattedTotalTimeA = $"{totalHours}:{elapsedTotal.ToString(@"mm\:ss")}";
+                    formattedTotalTimeB = $".{elapsedTotal.ToString(@"fff")}";
                 }
                 else if (Convert.ToInt32(elapsedTotal.ToString(@"hh")) != 0)
                 {
                     int totalHours = (int)elapsedTotal.TotalHours;
-                    TextBlock_TotalTime.Text = totalHours + ":" + elapsedTotal.ToString(@"mm\:ss\.ff");
+                    formattedTotalTimeA = $"{totalHours}:{elapsedTotal.ToString(@"mm\:ss")}";
+                    formattedTotalTimeB = $".{elapsedTotal.ToString(@"fff")}";
                 }
                 else if (Convert.ToInt32(elapsedTotal.ToString(@"mm")) != 0)
                 {
                     int totalMinutes = (int)elapsedTotal.TotalMinutes;
-                    TextBlock_TotalTime.Text = totalMinutes + ":" + elapsedTotal.ToString(@"ss\.ff");
+                    formattedTotalTimeA = $"{totalMinutes}:{elapsedTotal.ToString(@"ss")}";
+                    formattedTotalTimeB = $".{elapsedTotal.ToString(@"fff")}";
                 }
                 else
                 {
                     int totalSeconds = (int)elapsedTotal.TotalSeconds;
-                    TextBlock_TotalTime.Text = totalSeconds + "." + elapsedTotal.ToString(@"ff");
+                    formattedTotalTimeA = totalSeconds.ToString();
+                    formattedTotalTimeB = $".{elapsedTotal.ToString(@"fff")}";
                 }
+                TextBlock_TotalTime.Inlines.Add(new Run(formattedTotalTimeA));
+                TextBlock_TotalTime.Inlines.Add(new Run(formattedTotalTimeB) { FontSize = 18 });
+            }
+
+            else if (TotalAccuracy == "Milliseconds (0.00)")
+            {
+                if (Convert.ToInt32(elapsedTotal.ToString(@"dd")) != 0)
+                {
+                    int totalHours = (int)elapsedTotal.TotalHours;
+                    formattedTotalTimeA = $"{totalHours}:{elapsedTotal.ToString(@"mm\:ss")}";
+                    formattedTotalTimeB = $".{elapsedTotal.ToString(@"ff")}";
+                }
+                else if (Convert.ToInt32(elapsedTotal.ToString(@"hh")) != 0)
+                {
+                    int totalHours = (int)elapsedTotal.TotalHours;
+                    formattedTotalTimeA = $"{totalHours}:{elapsedTotal.ToString(@"mm\:ss")}";
+                    formattedTotalTimeB = $".{elapsedTotal.ToString(@"ff")}";
+                }
+                else if (Convert.ToInt32(elapsedTotal.ToString(@"mm")) != 0)
+                {
+                    int totalMinutes = (int)elapsedTotal.TotalMinutes;
+                    formattedTotalTimeA = $"{totalMinutes}:{elapsedTotal.ToString(@"ss")}";
+                    formattedTotalTimeB = $".{elapsedTotal.ToString(@"ff")}";
+                }
+                else
+                {
+                    int totalSeconds = (int)elapsedTotal.TotalSeconds;
+                    formattedTotalTimeA = totalSeconds.ToString();
+                    formattedTotalTimeB = $".{elapsedTotal.ToString(@"ff")}";
+                }
+                TextBlock_TotalTime.Inlines.Add(new Run(formattedTotalTimeA));
+                TextBlock_TotalTime.Inlines.Add(new Run(formattedTotalTimeB) { FontSize = 18 });
             }
 
             else if (TotalAccuracy == "Milliseconds (0.0)")
@@ -669,23 +757,29 @@ namespace SMW_Data
                 if (Convert.ToInt32(elapsedTotal.ToString(@"dd")) != 0)
                 {
                     int totalHours = (int)elapsedTotal.TotalHours;
-                    TextBlock_TotalTime.Text = totalHours + ":" + elapsedTotal.ToString(@"mm\:ss\.f");
+                    formattedTotalTimeA = $"{totalHours}:{elapsedTotal.ToString(@"mm\:ss")}";
+                    formattedTotalTimeB = elapsedTotal.ToString(@"\.f");
                 }
                 else if (Convert.ToInt32(elapsedTotal.ToString(@"hh")) != 0)
                 {
                     int totalHours = (int)elapsedTotal.TotalHours;
-                    TextBlock_TotalTime.Text = totalHours + ":" + elapsedTotal.ToString(@"mm\:ss\.f");
+                    formattedTotalTimeA = $"{totalHours}:{elapsedTotal.ToString(@"mm\:ss")}";
+                    formattedTotalTimeB = elapsedTotal.ToString(@"\.f");
                 }
                 else if (Convert.ToInt32(elapsedTotal.ToString(@"mm")) != 0)
                 {
                     int totalMinutes = (int)elapsedTotal.TotalMinutes;
-                    TextBlock_TotalTime.Text = totalMinutes + ":" + elapsedTotal.ToString(@"ss\.f");
+                    formattedTotalTimeA = $"{totalMinutes}:{elapsedTotal.ToString(@"ss")}";
+                    formattedTotalTimeB = elapsedTotal.ToString(@"\.f");
                 }
                 else
                 {
                     int totalSeconds = (int)elapsedTotal.TotalSeconds;
-                    TextBlock_TotalTime.Text = totalSeconds + elapsedTotal.ToString(@"\.f");
+                    formattedTotalTimeA = totalSeconds.ToString();
+                    formattedTotalTimeB = elapsedTotal.ToString(@"\.f");
                 }
+                TextBlock_TotalTime.Inlines.Add(new Run(formattedTotalTimeA));
+                TextBlock_TotalTime.Inlines.Add(new Run(formattedTotalTimeB) { FontSize = 18 });
             }
 
             else if (TotalAccuracy == "Seconds")
@@ -712,28 +806,64 @@ namespace SMW_Data
                 }
             }
 
-            if (LevelAccuracy == "Milliseconds (0.00)")
+            if (LevelAccuracy == "Milliseconds (0.000)")
             {
                 if (Convert.ToInt32(elapsedLevel.ToString(@"dd")) != 0)
                 {
                     int levelHours = (int)elapsedLevel.TotalHours;
-                    TextBlock_LevelTime.Text = levelHours + ":" + elapsedLevel.ToString(@"mm\:ss\.ff");
+                    formattedLevelTimeA = $"{levelHours}:{elapsedLevel.ToString(@"mm\:ss")}";
+                    formattedLevelTimeB = $".{elapsedLevel.ToString(@"fff")}";
                 }
                 else if (Convert.ToInt32(elapsedLevel.ToString(@"hh")) != 0)
                 {
                     int levelHours = (int)elapsedLevel.TotalHours;
-                    TextBlock_LevelTime.Text = levelHours + ":" + elapsedLevel.ToString(@"mm\:ss\.ff");
+                    formattedLevelTimeA = $"{levelHours}:{elapsedLevel.ToString(@"mm\:ss")}";
+                    formattedLevelTimeB = $".{elapsedLevel.ToString(@"fff")}";
                 }
                 else if (Convert.ToInt32(elapsedLevel.ToString(@"mm")) != 0)
                 {
                     int levelMinutes = (int)elapsedLevel.TotalMinutes;
-                    TextBlock_LevelTime.Text = levelMinutes + ":" + elapsedLevel.ToString(@"ss\.ff");
+                    formattedLevelTimeA = $"{levelMinutes}:{elapsedLevel.ToString(@"ss")}";
+                    formattedLevelTimeB = $".{elapsedLevel.ToString(@"fff")}";
                 }
                 else
                 {
                     int levelSeconds = (int)elapsedLevel.TotalSeconds;
-                    TextBlock_LevelTime.Text = levelSeconds + "." + elapsedLevel.ToString(@"ff");
+                    formattedLevelTimeA = levelSeconds.ToString();
+                    formattedLevelTimeB = $".{elapsedLevel.ToString(@"fff")}";
                 }
+                TextBlock_LevelTime.Inlines.Add(new Run(formattedLevelTimeA));
+                TextBlock_LevelTime.Inlines.Add(new Run(formattedLevelTimeB) { FontSize = 18 });
+            }
+
+            else if (LevelAccuracy == "Milliseconds (0.00)")
+            {
+                if (Convert.ToInt32(elapsedLevel.ToString(@"dd")) != 0)
+                {
+                    int levelHours = (int)elapsedLevel.TotalHours;
+                    formattedLevelTimeA = $"{levelHours}:{elapsedLevel.ToString(@"mm\:ss")}";
+                    formattedLevelTimeB = $".{elapsedLevel.ToString(@"ff")}";
+                }
+                else if (Convert.ToInt32(elapsedLevel.ToString(@"hh")) != 0)
+                {
+                    int levelHours = (int)elapsedLevel.TotalHours;
+                    formattedLevelTimeA = $"{levelHours}:{elapsedLevel.ToString(@"mm\:ss")}";
+                    formattedLevelTimeB = $".{elapsedLevel.ToString(@"ff")}";
+                }
+                else if (Convert.ToInt32(elapsedLevel.ToString(@"mm")) != 0)
+                {
+                    int levelMinutes = (int)elapsedLevel.TotalMinutes;
+                    formattedLevelTimeA = $"{levelMinutes}:{elapsedLevel.ToString(@"ss")}";
+                    formattedLevelTimeB = $".{elapsedLevel.ToString(@"ff")}";
+                }
+                else
+                {
+                    int levelSeconds = (int)elapsedLevel.TotalSeconds;
+                    formattedLevelTimeA = levelSeconds.ToString();
+                    formattedLevelTimeB = $".{elapsedLevel.ToString(@"ff")}";
+                }
+                TextBlock_LevelTime.Inlines.Add(new Run(formattedLevelTimeA));
+                TextBlock_LevelTime.Inlines.Add(new Run(formattedLevelTimeB) { FontSize = 18 });
             }
 
             else if (LevelAccuracy == "Milliseconds (0.0)")
@@ -741,23 +871,29 @@ namespace SMW_Data
                 if (Convert.ToInt32(elapsedLevel.ToString(@"dd")) != 0)
                 {
                     int levelHours = (int)elapsedLevel.TotalHours;
-                    TextBlock_LevelTime.Text = levelHours + ":" + elapsedLevel.ToString(@"mm\:ss\.f");
+                    formattedLevelTimeA = $"{levelHours}:{elapsedLevel.ToString(@"mm\:ss")}";
+                    formattedLevelTimeB = elapsedLevel.ToString(@"\.f");
                 }
                 else if (Convert.ToInt32(elapsedLevel.ToString(@"hh")) != 0)
                 {
                     int levelHours = (int)elapsedLevel.TotalHours;
-                    TextBlock_LevelTime.Text = levelHours + ":" + elapsedLevel.ToString(@"mm\:ss\.f");
+                    formattedLevelTimeA = $"{levelHours}:{elapsedLevel.ToString(@"mm\:ss")}";
+                    formattedLevelTimeB = elapsedLevel.ToString(@"\.f");
                 }
                 else if (Convert.ToInt32(elapsedLevel.ToString(@"mm")) != 0)
                 {
                     int levelMinutes = (int)elapsedLevel.TotalMinutes;
-                    TextBlock_LevelTime.Text = levelMinutes + ":" + elapsedLevel.ToString(@"ss\.f");
+                    formattedLevelTimeA = $"{levelMinutes}:{elapsedLevel.ToString(@"ss")}";
+                    formattedLevelTimeB = elapsedLevel.ToString(@"\.f");
                 }
                 else
                 {
                     int levelSeconds = (int)elapsedLevel.TotalSeconds;
-                    TextBlock_LevelTime.Text = levelSeconds + elapsedLevel.ToString(@"\.f");
+                    formattedLevelTimeA = levelSeconds.ToString();
+                    formattedLevelTimeB = elapsedLevel.ToString(@"\.f");
                 }
+                TextBlock_LevelTime.Inlines.Add(new Run(formattedLevelTimeA));
+                TextBlock_LevelTime.Inlines.Add(new Run(formattedLevelTimeB) { FontSize = 18 });
             }
 
             else if (LevelAccuracy == "Seconds")
@@ -787,7 +923,56 @@ namespace SMW_Data
 
         private void GetCurrentTimeTotal()
         {
-            if (TotalAccuracy == "Milliseconds (0.00)")
+            if (TotalAccuracy == "Milliseconds (0.000)")
+            {
+                switch (TextBlock_TotalTime.Text.Length)
+                {
+                    case 5:     // <10s
+                        currentTimeTotal = TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 1))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 3, 3)));
+                        break;
+                    case 6:     // <1min
+                        currentTimeTotal = TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 3, 3)));
+                        break;
+                    case 8:     // <10min
+                        currentTimeTotal = TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 1))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(2, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 3, 3)));
+                        break;
+                    case 9:     // <1hr
+                        currentTimeTotal = TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(3, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 3, 3)));
+                        break;
+                    case 11:    // <10hrs
+                        currentTimeTotal = TimeSpan.FromHours(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 1))) +
+                            TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(2, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(5, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 3, 3)));
+                        break;
+                    case 12:    // <100hrs
+                        currentTimeTotal = TimeSpan.FromHours(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 2))) +
+                            TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(3, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(6, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 3, 3)));
+                        break;
+                    case 13:    // <1000hrs
+                        currentTimeTotal = TimeSpan.FromHours(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 3))) +
+                            TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(4, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(7, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 3, 3)));
+                        break;
+                    default:    //>=1000hrs
+                        currentTimeTotal = TimeSpan.FromHours(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(0, 4))) +
+                            TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(5, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(8, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_TotalTime.Text.ToString().Substring(TextBlock_TotalTime.Text.Length - 3, 3)));
+                        break;
+                }
+            }
+
+            else if (TotalAccuracy == "Milliseconds (0.00)")
             {
                 switch (TextBlock_TotalTime.Text.Length)
                 {
@@ -927,7 +1112,55 @@ namespace SMW_Data
 
         private void GetCurrentTimeLastLevel()
         {
-            if (LevelAccuracy == "Milliseconds (0.00)")
+            if (LevelAccuracy == "Milliseconds (0.000)")
+            {
+                switch (TextBlock_LastLevelTime.Text.Length)
+                {
+                    case 5:     // <10s
+                        currentTimeLastLevel = TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(0, 1))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(TextBlock_LastLevelTime.Text.Length - 3, 3)));
+                        break;
+                    case 6:     // 1min
+                        currentTimeLastLevel = TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(0, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(TextBlock_LastLevelTime.Text.Length - 3, 3)));
+                        break;
+                    case 8:     // <10min
+                        currentTimeLastLevel = TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(0, 1))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(2, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(TextBlock_LastLevelTime.Text.Length - 3, 3)));
+                        break;
+                    case 9:     // <1hr
+                        currentTimeLastLevel = TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(0, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(3, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(TextBlock_LastLevelTime.Text.Length - 3, 3)));
+                        break;
+                    case 11:    // <10hrs
+                        currentTimeLastLevel = TimeSpan.FromHours(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(0, 1))) +
+                            TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(2, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(5, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(TextBlock_LastLevelTime.Text.Length - 3, 3)));
+                        break;
+                    case 12:    // <100hrs
+                        currentTimeLastLevel = TimeSpan.FromHours(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(0, 2))) +
+                            TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(3, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(6, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(TextBlock_LastLevelTime.Text.Length - 3, 3)));
+                        break;
+                    case 13:    // <1000hrs
+                        currentTimeLastLevel = TimeSpan.FromHours(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(0, 3))) +
+                            TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(4, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(7, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(TextBlock_LastLevelTime.Text.Length - 3, 3)));
+                        break;
+                    default:    //>=1000hrs
+                        currentTimeLastLevel = TimeSpan.FromHours(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(0, 4))) +
+                            TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(5, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(8, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LastLevelTime.Text.ToString().Substring(TextBlock_LastLevelTime.Text.Length - 3, 3)));
+                        break;
+                }
+            }
+            else if (LevelAccuracy == "Milliseconds (0.00)")
             {
                 switch (TextBlock_LastLevelTime.Text.Length)
                 {
@@ -1067,7 +1300,55 @@ namespace SMW_Data
 
         private void GetCurrentTimeLevel()
         {
-            if (LevelAccuracy == "Milliseconds (0.00)")
+            if (LevelAccuracy == "Milliseconds (0.000)")
+            {
+                switch (TextBlock_LevelTime.Text.Length)
+                {
+                    case 5:     // <10s
+                        currentTimeLevel = TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 1))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 3, 3)));
+                        break;
+                    case 6:     // 1min
+                        currentTimeLevel = TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 3, 3)));
+                        break;
+                    case 8:     // <10min
+                        currentTimeLevel = TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 1))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(2, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 3, 3)));
+                        break;
+                    case 9:     // <1hr
+                        currentTimeLevel = TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(3, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 3, 3)));
+                        break;
+                    case 11:    // <10hrs
+                        currentTimeLevel = TimeSpan.FromHours(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 1))) +
+                            TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(2, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(5, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 3, 3)));
+                        break;
+                    case 12:    // <100hrs
+                        currentTimeLevel = TimeSpan.FromHours(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 2))) +
+                            TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(3, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(6, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 3, 3)));
+                        break;
+                    case 13:    // <1000hrs
+                        currentTimeLevel = TimeSpan.FromHours(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 3))) +
+                            TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(4, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(7, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 3, 3)));
+                        break;
+                    default:    //>=1000hrs
+                        currentTimeLevel = TimeSpan.FromHours(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(0, 4))) +
+                            TimeSpan.FromMinutes(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(5, 2))) +
+                            TimeSpan.FromSeconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(8, 2))) +
+                            TimeSpan.FromMilliseconds(Convert.ToInt32(TextBlock_LevelTime.Text.ToString().Substring(TextBlock_LevelTime.Text.Length - 3, 3)));
+                        break;
+                }
+            }
+            else if (LevelAccuracy == "Milliseconds (0.00)")
             {
                 switch (TextBlock_LevelTime.Text.Length)
                 {
@@ -1209,13 +1490,23 @@ namespace SMW_Data
         {
             startTimeLevel = DateTime.Now;
 
-            if (LevelAccuracy == "Milliseconds (0.00)")
+            if (LevelAccuracy == "Milliseconds (0.000)")
             {
-                TextBlock_LevelTime.Text = "0.00";
+                TextBlock_LevelTime.Inlines.Clear();
+                TextBlock_LevelTime.Inlines.Add(new Run("0"));
+                TextBlock_LevelTime.Inlines.Add(new Run(".000") { FontSize = 18 });
+            }
+            else if (LevelAccuracy == "Milliseconds (0.00)")
+            {
+                TextBlock_LevelTime.Inlines.Clear();
+                TextBlock_LevelTime.Inlines.Add(new Run("0"));
+                TextBlock_LevelTime.Inlines.Add(new Run(".00") { FontSize = 18 });
             }
             else if (LevelAccuracy == "Milliseconds (0.0)")
             {
-                TextBlock_LevelTime.Text = "0.0";
+                TextBlock_LevelTime.Inlines.Clear();
+                TextBlock_LevelTime.Inlines.Add(new Run("0"));
+                TextBlock_LevelTime.Inlines.Add(new Run(".0") { FontSize = 18 });
             }
             else if (LevelAccuracy == "Seconds")
             {
@@ -1225,13 +1516,23 @@ namespace SMW_Data
 
         private void Button_TimerResetLastLevel_Click(object sender, RoutedEventArgs e)
         {
-            if (LevelAccuracy == "Milliseconds (0.00)")
+            if (LevelAccuracy == "Milliseconds (0.000)")
             {
-                TextBlock_LastLevelTime.Text = "0.00";
+                TextBlock_LastLevelTime.Inlines.Clear();
+                TextBlock_LastLevelTime.Inlines.Add(new Run("0"));
+                TextBlock_LastLevelTime.Inlines.Add(new Run(".000") { FontSize = 12 });
+            }
+            else if (LevelAccuracy == "Milliseconds (0.00)")
+            {
+                TextBlock_LastLevelTime.Inlines.Clear();
+                TextBlock_LastLevelTime.Inlines.Add(new Run("0"));
+                TextBlock_LastLevelTime.Inlines.Add(new Run(".00") { FontSize = 12 });
             }
             else if (LevelAccuracy == "Milliseconds (0.0)")
             {
-                TextBlock_LastLevelTime.Text = "0.0";
+                TextBlock_LastLevelTime.Inlines.Clear();
+                TextBlock_LastLevelTime.Inlines.Add(new Run("0"));
+                TextBlock_LastLevelTime.Inlines.Add(new Run(".0") { FontSize = 12 });
             }
             else if (LevelAccuracy == "Seconds")
             {
@@ -1244,29 +1545,23 @@ namespace SMW_Data
             startTimeTotal = DateTime.Now;
             startTimeLevel = DateTime.Now;
 
-            if (LevelAccuracy == "Milliseconds (0.00)")
+            if (TotalAccuracy == "Milliseconds (0.000)")
             {
-                TextBlock_LevelTime.Text = "0.00";
-                TextBlock_LastLevelTime.Text = "0.00";
+                TextBlock_TotalTime.Inlines.Clear();
+                TextBlock_TotalTime.Inlines.Add(new Run("0"));
+                TextBlock_TotalTime.Inlines.Add(new Run(".000") { FontSize = 18 });
             }
-            else if (LevelAccuracy == "Milliseconds (0.0)")
+            else if (TotalAccuracy == "Milliseconds (0.00)")
             {
-                TextBlock_LevelTime.Text = "0.0";
-                TextBlock_LastLevelTime.Text = "0.0";
-            }
-            else if (LevelAccuracy == "Seconds")
-            {
-                TextBlock_LevelTime.Text = "0";
-                TextBlock_LastLevelTime.Text = "0";
-            }
-
-            if (TotalAccuracy == "Milliseconds (0.00)")
-            {
-                TextBlock_TotalTime.Text = "0.00";
+                TextBlock_TotalTime.Inlines.Clear();
+                TextBlock_TotalTime.Inlines.Add(new Run("0"));
+                TextBlock_TotalTime.Inlines.Add(new Run(".00") { FontSize = 18 });
             }
             else if (TotalAccuracy == "Milliseconds (0.0)")
             {
-                TextBlock_TotalTime.Text = "0.0";
+                TextBlock_TotalTime.Inlines.Clear();
+                TextBlock_TotalTime.Inlines.Add(new Run("0"));
+                TextBlock_TotalTime.Inlines.Add(new Run(".0") { FontSize = 18 });
             }
             else if (TotalAccuracy == "Seconds")
             {
@@ -1283,42 +1578,88 @@ namespace SMW_Data
 
         private void Button_TimersSetLevel_Click(object sender, RoutedEventArgs e)
         {
-            if (LevelAccuracy == "Milliseconds (0.00)")
+            if (LevelAccuracy == "Milliseconds (0.000)")
             {
+                TextBlock_LevelTime.Inlines.Clear();
+
                 if (Convert.ToInt32(TextBox_LevelHours.Text) != 0)
                 {
-                    TextBlock_LevelTime.Text = TextBox_LevelHours.Text + ":" + TextBox_LevelMinutes.Text.PadLeft(2, '0') + ":" + TextBox_LevelSeconds.Text.PadLeft(2, '0') + "." + TextBox_LevelMilliseconds.Text.PadLeft(2, '0');
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelHours.Text + ":"));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelMinutes.Text.PadLeft(2, '0') + ":"));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelSeconds.Text.PadLeft(2, '0')));
+                    TextBlock_LevelTime.Inlines.Add(new Run("." + TextBox_LevelMilliseconds.Text) { FontSize = 18 });
                 }
                 else if (Convert.ToInt32(TextBox_LevelMinutes.Text) != 0)
                 {
-                    TextBlock_LevelTime.Text = TextBox_LevelMinutes.Text + ":" + TextBox_LevelSeconds.Text.PadLeft(2, '0') + "." + TextBox_LevelMilliseconds.Text.PadLeft(2, '0');
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelMinutes.Text + ":"));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelSeconds.Text.PadLeft(2, '0')));
+                    TextBlock_LevelTime.Inlines.Add(new Run("." + TextBox_LevelMilliseconds.Text) { FontSize = 18 });
                 }
                 else if (Convert.ToInt32(TextBox_LevelSeconds.Text) != 0)
                 {
-                    TextBlock_LevelTime.Text = TextBox_LevelSeconds.Text + "." + TextBox_LevelMilliseconds.Text.PadLeft(2, '0');
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelSeconds.Text));
+                    TextBlock_LevelTime.Inlines.Add(new Run("." + TextBox_LevelMilliseconds.Text) { FontSize = 18 });
                 }
                 else
                 {
-                    TextBlock_LevelTime.Text = "0." + TextBox_LevelMilliseconds.Text;
+                    TextBlock_LevelTime.Inlines.Add(new Run("0"));
+                    TextBlock_LevelTime.Inlines.Add(new Run("." + TextBox_LevelMilliseconds.Text) { FontSize = 18 });
+                }
+            }
+            else if (LevelAccuracy == "Milliseconds (0.00)")
+            {
+                TextBlock_LevelTime.Inlines.Clear();
+
+                if (Convert.ToInt32(TextBox_LevelHours.Text) != 0)
+                {
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelHours.Text + ":"));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelMinutes.Text.PadLeft(2, '0') + ":"));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelSeconds.Text.PadLeft(2, '0')));
+                    TextBlock_LevelTime.Inlines.Add(new Run("." + TextBox_LevelMilliseconds.Text.Substring(0, 2)) { FontSize = 18 });
+                }
+                else if (Convert.ToInt32(TextBox_LevelMinutes.Text) != 0)
+                {
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelMinutes.Text + ":"));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelSeconds.Text.PadLeft(2, '0')));
+                    TextBlock_LevelTime.Inlines.Add(new Run("." + TextBox_LevelMilliseconds.Text.Substring(0, 2)) { FontSize = 18 });
+                }
+                else if (Convert.ToInt32(TextBox_LevelSeconds.Text) != 0)
+                {
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelSeconds.Text));
+                    TextBlock_LevelTime.Inlines.Add(new Run("." + TextBox_LevelMilliseconds.Text.Substring(0, 2)) { FontSize = 18 });
+                }
+                else
+                {
+                    TextBlock_LevelTime.Inlines.Add(new Run("0"));
+                    TextBlock_LevelTime.Inlines.Add(new Run("." + TextBox_LevelMilliseconds.Text.Substring(0, 2)) { FontSize = 18 });
                 }
             }
             else if (LevelAccuracy == "Milliseconds (0.0)")
             {
+                TextBlock_LevelTime.Inlines.Clear();
+
                 if (Convert.ToInt32(TextBox_LevelHours.Text) != 0)
                 {
-                    TextBlock_LevelTime.Text = TextBox_LevelHours.Text + ":" + TextBox_LevelMinutes.Text.PadLeft(2, '0') + ":" + TextBox_LevelSeconds.Text.PadLeft(2, '0') + "." + int.Parse(TextBox_LevelMilliseconds.Text.PadLeft(2, '0').Substring(0, 1));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelHours.Text + ":"));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelMinutes.Text.PadLeft(2, '0') + ":"));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelSeconds.Text.PadLeft(2, '0') + "."));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelMilliseconds.Text.Substring(0, 1)) { FontSize = 18 });
                 }
                 else if (Convert.ToInt32(TextBox_LevelMinutes.Text) != 0)
                 {
-                    TextBlock_LevelTime.Text = TextBox_LevelMinutes.Text + ":" + TextBox_LevelSeconds.Text + "." + int.Parse(TextBox_LevelMilliseconds.Text.PadLeft(2, '0').Substring(0, 1));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelMinutes.Text + ":"));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelSeconds.Text.PadLeft(2, '0') + "."));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelMilliseconds.Text.Substring(0, 1)) { FontSize = 18 });
                 }
                 else if (Convert.ToInt32(TextBox_LevelSeconds.Text) != 0)
                 {
-                    TextBlock_LevelTime.Text = TextBox_LevelSeconds.Text + "." + int.Parse(TextBox_LevelMilliseconds.Text.PadLeft(2, '0').Substring(0, 1));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelSeconds.Text + "."));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelMilliseconds.Text.Substring(0, 1)) { FontSize = 18 });
                 }
                 else
                 {
-                    TextBlock_LevelTime.Text = "0." + int.Parse(TextBox_LevelMilliseconds.Text.PadLeft(2, '0').Substring(0, 1));
+                    TextBlock_LevelTime.Inlines.Add(new Run("0."));
+                    TextBlock_LevelTime.Inlines.Add(new Run(TextBox_LevelMilliseconds.Text.Substring(0, 1)) { FontSize = 18 });
                 }
             }
             else if (LevelAccuracy == "Seconds")
@@ -1340,42 +1681,88 @@ namespace SMW_Data
 
         private void Button_TimersSetLastLevel_Click(object sender, RoutedEventArgs e)
         {
-            if (LevelAccuracy == "Milliseconds (0.00)")
+            if (LevelAccuracy == "Milliseconds (0.000)")
             {
+                TextBlock_LastLevelTime.Inlines.Clear();
+
                 if (Convert.ToInt32(TextBox_LastLevelHours.Text) != 0)
                 {
-                    TextBlock_LastLevelTime.Text = TextBox_LastLevelHours.Text + ":" + TextBox_LastLevelMinutes.Text.PadLeft(2, '0') + ":" + TextBox_LastLevelSeconds.Text.PadLeft(2, '0') + "." + TextBox_LastLevelMilliseconds.Text.PadLeft(2, '0');
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelHours.Text + ":"));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelMinutes.Text.PadLeft(2, '0') + ":"));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelSeconds.Text.PadLeft(2, '0')));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run("." + TextBox_LastLevelMilliseconds.Text) { FontSize = 12 });
                 }
-                else if (Convert.ToInt32(TextBox_LevelMinutes.Text) != 0)
+                else if (Convert.ToInt32(TextBox_LastLevelMinutes.Text) != 0)
                 {
-                    TextBlock_LastLevelTime.Text = TextBox_LastLevelMinutes.Text + ":" + TextBox_LastLevelSeconds.Text.PadLeft(2, '0') + "." + TextBox_LastLevelMilliseconds.Text.PadLeft(2, '0');
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelMinutes.Text + ":"));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelSeconds.Text.PadLeft(2, '0')));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run("." + TextBox_LastLevelMilliseconds.Text) { FontSize = 12 });
                 }
-                else if (Convert.ToInt32(TextBox_LevelSeconds.Text) != 0)
+                else if (Convert.ToInt32(TextBox_LastLevelSeconds.Text) != 0)
                 {
-                    TextBlock_LastLevelTime.Text = TextBox_LastLevelSeconds.Text + "." + TextBox_LastLevelMilliseconds.Text.PadLeft(2, '0');
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelSeconds.Text));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run("." + TextBox_LastLevelMilliseconds.Text) { FontSize = 12 });
                 }
                 else
                 {
-                    TextBlock_LastLevelTime.Text = "0." + TextBox_LastLevelMilliseconds.Text;
+                    TextBlock_LastLevelTime.Inlines.Add(new Run("0"));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run("." + TextBox_LastLevelMilliseconds.Text) { FontSize = 12 });
+                }
+            }
+            else if (LevelAccuracy == "Milliseconds (0.00)")
+            {
+                TextBlock_LastLevelTime.Inlines.Clear();
+
+                if (Convert.ToInt32(TextBox_LastLevelHours.Text) != 0)
+                {
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelHours.Text + ":"));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelMinutes.Text.PadLeft(2, '0') + ":"));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelSeconds.Text.PadLeft(2, '0')));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run("." + TextBox_LastLevelMilliseconds.Text.Substring(0, 2)) { FontSize = 12 });
+                }
+                else if (Convert.ToInt32(TextBox_LastLevelMinutes.Text) != 0)
+                {
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelMinutes.Text + ":"));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelSeconds.Text.PadLeft(2, '0')));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run("." + TextBox_LastLevelMilliseconds.Text.Substring(0, 2)) { FontSize = 12 });
+                }
+                else if (Convert.ToInt32(TextBox_LastLevelSeconds.Text) != 0)
+                {
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelSeconds.Text));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run("." + TextBox_LastLevelMilliseconds.Text.Substring(0, 2)) { FontSize = 12 });
+                }
+                else
+                {
+                    TextBlock_LastLevelTime.Inlines.Add(new Run("0"));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run("." + TextBox_LastLevelMilliseconds.Text.Substring(0, 2)) { FontSize = 12 });
                 }
             }
             else if (LevelAccuracy == "Milliseconds (0.0)")
             {
+                TextBlock_LastLevelTime.Inlines.Clear();
+
                 if (Convert.ToInt32(TextBox_LastLevelHours.Text) != 0)
                 {
-                    TextBlock_LastLevelTime.Text = TextBox_LastLevelHours.Text + ":" + TextBox_LastLevelMinutes.Text.PadLeft(2, '0') + ":" + TextBox_LastLevelSeconds.Text.PadLeft(2, '0') + "." + int.Parse(TextBox_LastLevelMilliseconds.Text.PadLeft(2, '0').Substring(0, 1));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelHours.Text + ":"));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelMinutes.Text.PadLeft(2, '0') + ":"));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelSeconds.Text.PadLeft(2, '0') + "."));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelMilliseconds.Text.Substring(0, 1)) { FontSize = 12 });
                 }
                 else if (Convert.ToInt32(TextBox_LastLevelMinutes.Text) != 0)
                 {
-                    TextBlock_LastLevelTime.Text = TextBox_LastLevelMinutes.Text + ":" + TextBox_LastLevelSeconds.Text + "." + int.Parse(TextBox_LastLevelMilliseconds.Text.PadLeft(2, '0').Substring(0, 1));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelMinutes.Text + ":"));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelSeconds.Text.PadLeft(2, '0') + "."));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelMilliseconds.Text.Substring(0, 1)) { FontSize = 12 });
                 }
                 else if (Convert.ToInt32(TextBox_LastLevelSeconds.Text) != 0)
                 {
-                    TextBlock_LastLevelTime.Text = TextBox_LastLevelSeconds.Text + "." + int.Parse(TextBox_LastLevelMilliseconds.Text.PadLeft(2, '0').Substring(0, 1));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelSeconds.Text + "."));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelMilliseconds.Text.Substring(0, 1)) { FontSize = 12 });
                 }
                 else
                 {
-                    TextBlock_LastLevelTime.Text = "0." + int.Parse(TextBox_LastLevelMilliseconds.Text.PadLeft(2, '0').Substring(0, 1));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run("0."));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(TextBox_LastLevelMilliseconds.Text.Substring(0, 1)) { FontSize = 12 });
                 }
             }
             else if (LevelAccuracy == "Seconds")
@@ -1397,42 +1784,88 @@ namespace SMW_Data
 
         private void Button_TimersSetTotal_Click(object sender, RoutedEventArgs e)
         {
-            if (TotalAccuracy == "Milliseconds (0.00)")
+            if (TotalAccuracy == "Milliseconds (0.000)")
             {
+                TextBlock_TotalTime.Inlines.Clear();
+
                 if (Convert.ToInt32(TextBox_TotalHours.Text) != 0)
                 {
-                    TextBlock_TotalTime.Text = TextBox_TotalHours.Text + ":" + TextBox_TotalMinutes.Text.PadLeft(2, '0') + ":" + TextBox_TotalSeconds.Text.PadLeft(2, '0') + "." + TextBox_TotalMilliseconds.Text.PadLeft(2, '0');
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalHours.Text + ":"));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalMinutes.Text.PadLeft(2, '0') + ":"));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalSeconds.Text.PadLeft(2, '0')));
+                    TextBlock_TotalTime.Inlines.Add(new Run("." + TextBox_TotalMilliseconds.Text) { FontSize = 18 });
                 }
                 else if (Convert.ToInt32(TextBox_TotalMinutes.Text) != 0)
                 {
-                    TextBlock_TotalTime.Text = TextBox_TotalMinutes.Text + ":" + TextBox_TotalSeconds.Text.PadLeft(2, '0') + "." + TextBox_TotalMilliseconds.Text.PadLeft(2, '0');
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalMinutes.Text + ":"));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalSeconds.Text.PadLeft(2, '0')));
+                    TextBlock_TotalTime.Inlines.Add(new Run("." + TextBox_TotalMilliseconds.Text) { FontSize = 18 });
                 }
                 else if (Convert.ToInt32(TextBox_TotalSeconds.Text) != 0)
                 {
-                    TextBlock_TotalTime.Text = TextBox_TotalSeconds.Text + "." + TextBox_TotalMilliseconds.Text.PadLeft(2, '0');
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalSeconds.Text));
+                    TextBlock_TotalTime.Inlines.Add(new Run("." + TextBox_TotalMilliseconds.Text) { FontSize = 18 });
                 }
                 else
                 {
-                    TextBlock_TotalTime.Text = "0." + TextBox_TotalMilliseconds.Text;
+                    TextBlock_TotalTime.Inlines.Add(new Run("0"));
+                    TextBlock_TotalTime.Inlines.Add(new Run("." + TextBox_TotalMilliseconds.Text) { FontSize = 18 });
+                }
+            }
+            else if (TotalAccuracy == "Milliseconds (0.00)")
+            {
+                TextBlock_TotalTime.Inlines.Clear();
+
+                if (Convert.ToInt32(TextBox_TotalHours.Text) != 0)
+                {
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalHours.Text + ":"));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalMinutes.Text.PadLeft(2, '0') + ":"));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalSeconds.Text.PadLeft(2, '0')));
+                    TextBlock_TotalTime.Inlines.Add(new Run("." + TextBox_TotalMilliseconds.Text.Substring(0, 2)) { FontSize = 18 });
+                }
+                else if (Convert.ToInt32(TextBox_TotalMinutes.Text) != 0)
+                {
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalMinutes.Text + ":"));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalSeconds.Text.PadLeft(2, '0')));
+                    TextBlock_TotalTime.Inlines.Add(new Run("." + TextBox_TotalMilliseconds.Text.Substring(0, 2)) { FontSize = 18 });
+                }
+                else if (Convert.ToInt32(TextBox_TotalSeconds.Text) != 0)
+                {
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalSeconds.Text));
+                    TextBlock_TotalTime.Inlines.Add(new Run("." + TextBox_TotalMilliseconds.Text.Substring(0, 2)) { FontSize = 18 });
+                }
+                else
+                {
+                    TextBlock_TotalTime.Inlines.Add(new Run("0"));
+                    TextBlock_TotalTime.Inlines.Add(new Run("." + TextBox_TotalMilliseconds.Text.Substring(0, 2)) { FontSize = 18 });
                 }
             }
             else if (TotalAccuracy == "Milliseconds (0.0)")
             {
+                TextBlock_TotalTime.Inlines.Clear();
+
                 if (Convert.ToInt32(TextBox_TotalHours.Text) != 0)
                 {
-                    TextBlock_TotalTime.Text = TextBox_TotalHours.Text + ":" + TextBox_TotalMinutes.Text.PadLeft(2, '0') + ":" + TextBox_TotalSeconds.Text.PadLeft(2, '0') + "." + int.Parse(TextBox_TotalMilliseconds.Text.PadLeft(2, '0').Substring(0, 1));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalHours.Text + ":"));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalMinutes.Text.PadLeft(2, '0') + ":"));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalSeconds.Text.PadLeft(2, '0') + "."));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalMilliseconds.Text.Substring(0, 1)) { FontSize = 18 });
                 }
                 else if (Convert.ToInt32(TextBox_TotalMinutes.Text) != 0)
                 {
-                    TextBlock_TotalTime.Text = TextBox_TotalMinutes.Text + ":" + TextBox_TotalSeconds.Text + "." + int.Parse(TextBox_TotalMilliseconds.Text.PadLeft(2, '0').Substring(0, 1));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalMinutes.Text + ":"));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalSeconds.Text.PadLeft(2, '0') + "."));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalMilliseconds.Text.Substring(0, 1)) { FontSize = 18 });
                 }
                 else if (Convert.ToInt32(TextBox_TotalSeconds.Text) != 0)
                 {
-                    TextBlock_TotalTime.Text = TextBox_TotalSeconds.Text + "." + int.Parse(TextBox_TotalMilliseconds.Text.PadLeft(2, '0').Substring(0, 1));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalSeconds.Text + "."));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalMilliseconds.Text.Substring(0, 1)) { FontSize = 18 });
                 }
                 else
                 {
-                    TextBlock_TotalTime.Text = "0." + int.Parse(TextBox_TotalMilliseconds.Text.PadLeft(2, '0').Substring(0, 1));
+                    TextBlock_TotalTime.Inlines.Add(new Run("0."));
+                    TextBlock_TotalTime.Inlines.Add(new Run(TextBox_TotalMilliseconds.Text.Substring(0, 1)) { FontSize = 18 });
                 }
             }
             else if (TotalAccuracy == "Seconds")
@@ -1463,10 +1896,12 @@ namespace SMW_Data
         {
             TextBlock_ExitCountTotal.Text = TextBox_ExitCountTotal_Manual.Text;
         }
+
         private void Button_SetCurrentExits_Click(object sender, RoutedEventArgs e)
         {
             TextBlock_ExitCountCurrent.Text = TextBox_ExitCountCurrent_Manual.Text;
         }
+
         private async void Button_UpdateHackInfo_Click(object sender, RoutedEventArgs e)
         {
             string hackName = TextBox_HackName.Text;
@@ -1759,45 +2194,51 @@ namespace SMW_Data
             if (timerWindow.TimerOK)
             {
 
-                switch (timerWindow.ComboBoxLevelAccuracy.SelectedIndex)
+                switch (SelectedLevelAccuracyIndex)
                 {
                     case 0:
-                        LevelAccuracy = "Milliseconds (0.00)";
+                        LevelAccuracy = "Milliseconds (0.000)";
                         break;
                     case 1:
-                        LevelAccuracy = "Milliseconds (0.0)";
+                        LevelAccuracy = "Milliseconds (0.00)";
                         break;
                     case 2:
+                        LevelAccuracy = "Milliseconds (0.0)";
+                        break;
+                    case 3:
                         LevelAccuracy = "Seconds";
                         break;
                 }
 
-                switch (timerWindow.ComboBoxTotalAccuracy.SelectedIndex)
+                switch (SelectedTotalAccuracyIndex)
                 {
                     case 0:
-                        TotalAccuracy = "Milliseconds (0.00)";
+                        TotalAccuracy = "Milliseconds (0.000)";
                         break;
                     case 1:
-                        TotalAccuracy = "Milliseconds (0.0)";
+                        TotalAccuracy = "Milliseconds (0.00)";
                         break;
                     case 2:
+                        TotalAccuracy = "Milliseconds (0.0)";
+                        break;
+                    case 3:
                         TotalAccuracy = "Seconds";
                         break;
                 }
-                
-/*                GetCurrentTimeTotal();
-                GetCurrentTimeLastLevel();
-                GetCurrentTimeLevel();
-                if (currentTimeTotal == TimeSpan.Zero)
-                {
-                    startTimeTotal = DateTime.Now;
-                    startTimeLevel = startTimeTotal;
-                }
-                else
-                {
-                    TimeSpan startTimeTotal = elapsedTotal;
-                    TimeSpan startTimeLevel = elapsedLevel;
-                }*/
+
+                /*                GetCurrentTimeTotal();
+                                GetCurrentTimeLastLevel();
+                                GetCurrentTimeLevel();
+                                if (currentTimeTotal == TimeSpan.Zero)
+                                {
+                                    startTimeTotal = DateTime.Now;
+                                    startTimeLevel = startTimeTotal;
+                                }
+                                else
+                                {
+                                    TimeSpan startTimeTotal = elapsedTotal;
+                                    TimeSpan startTimeLevel = elapsedLevel;
+                                }*/
 
                 //GetTimes();
             }
@@ -1839,14 +2280,40 @@ namespace SMW_Data
                 TextBlock_LevelDeathCount.Text = LevelDeathCount.ToString();
                 CounterRange();
 
-                TextBlock_LastLevelTime.Text = TextBlock_LevelTime.Text;
-                if (LevelAccuracy == "Milliseconds (0.00)")
+                // Record Last Level Time
+                string lastLevelTime = TextBlock_LevelTime.Text;
+                TextBlock_LastLevelTime.Inlines.Clear();
+                int decimalIndex = lastLevelTime.IndexOf('.');
+                if (decimalIndex >= 0)
                 {
-                    TextBlock_LevelTime.Text = "0.00";
+                    string beforeDecimal = lastLevelTime.Substring(0, decimalIndex);
+                    string afterDecimal = lastLevelTime.Substring(decimalIndex);
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(beforeDecimal));
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(afterDecimal) { FontSize = 12 });
+                }
+                else
+                {
+                    TextBlock_LastLevelTime.Inlines.Add(new Run(lastLevelTime));
+                }
+
+                // Reset Level Time to Zero
+                if (LevelAccuracy == "Milliseconds (0.000)")
+                {
+                    TextBlock_LevelTime.Inlines.Clear();
+                    TextBlock_LevelTime.Inlines.Add(new Run("0"));
+                    TextBlock_LevelTime.Inlines.Add(new Run(".000") { FontSize = 18 });
+                }
+                else if (LevelAccuracy == "Milliseconds (0.00)")
+                {
+                    TextBlock_LevelTime.Inlines.Clear();
+                    TextBlock_LevelTime.Inlines.Add(new Run("0"));
+                    TextBlock_LevelTime.Inlines.Add(new Run(".00") { FontSize = 18 });
                 }
                 else if (LevelAccuracy == "Milliseconds (0.0)")
                 {
-                    TextBlock_LevelTime.Text = "0.0";
+                    TextBlock_LevelTime.Inlines.Clear();
+                    TextBlock_LevelTime.Inlines.Add(new Run("0"));
+                    TextBlock_LevelTime.Inlines.Add(new Run(".0") { FontSize = 18 });
                 }
                 else if (LevelAccuracy == "Seconds")
                 {
@@ -1869,6 +2336,384 @@ namespace SMW_Data
 
                 Label_Hack.FontFamily = CurrentFontTitle;
                 Label_Creator.FontFamily = CurrentFontAuthor;
+            }
+        }
+
+        private void TextBox_LevelHours_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_LevelHours_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_LevelHours.Text == "0")
+            {
+                TextBox_LevelHours.Clear();
+            }
+            TextBox_LevelHours.Focus();
+        }
+
+        private void TextBox_LevelHours_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_LevelHours.Text))
+            {
+                TextBox_LevelHours.Text = "0";
+            }
+            else
+            {
+                TextBox_LevelHours.Text = int.Parse(TextBox_LevelHours.Text).ToString();
+            }
+        }
+
+        private void TextBox_LevelMinutes_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_LevelSeconds_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_LevelMilliseconds_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_LastLevelHours_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_LastLevelMinutes_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_LastLevelSeconds_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_LastLevelMilliseconds_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_TotalHours_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_TotalMinutes_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_TotalSeconds_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_TotalMilliseconds_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!int.TryParse(e.Text, out _))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_LevelMinutes_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_LevelMinutes.Text == "00")
+            {
+                TextBox_LevelMinutes.Clear();
+            }
+            TextBox_LevelMinutes.Focus();
+        }
+
+        private void TextBox_LevelMinutes_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_LevelMinutes.Text) || int.Parse(TextBox_LevelMinutes.Text) == 0)
+            {
+                TextBox_LevelMinutes.Text = "00";
+            }
+            else
+            {
+                TextBox_LevelMinutes.Text = int.Parse(TextBox_LevelMinutes.Text).ToString();
+            }
+
+            if (int.Parse(TextBox_LevelMinutes.Text) > 59)
+            {
+                TextBox_LevelMinutes.Text = "59";
+            }
+        }
+
+        private void TextBox_LevelSeconds_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_LevelSeconds.Text == "00")
+            {
+                TextBox_LevelSeconds.Clear();
+            }
+            TextBox_LevelSeconds.Focus();
+        }
+
+        private void TextBox_LevelSeconds_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_LevelSeconds.Text) || int.Parse(TextBox_LevelSeconds.Text) == 0)
+            {
+                TextBox_LevelSeconds.Text = "00";
+            }
+            else
+            {
+                TextBox_LevelSeconds.Text = int.Parse(TextBox_LevelSeconds.Text).ToString();
+            }
+
+            if (int.Parse(TextBox_LevelSeconds.Text) > 59)
+            {
+                TextBox_LevelSeconds.Text = "59";
+            }
+        }
+
+        private void TextBox_LevelMilliseconds_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_LevelMilliseconds.Text == "000")
+            {
+                TextBox_LevelMilliseconds.Clear();
+            }
+            TextBox_LevelMilliseconds.Focus();
+        }
+
+        private void TextBox_LevelMilliseconds_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_LevelMilliseconds.Text))
+            {
+                TextBox_LevelMilliseconds.Text = "000";
+            }
+            else
+            {
+                TextBox_LevelMilliseconds.Text = TextBox_LevelMilliseconds.Text.PadLeft(3, '0');
+            }
+        }
+
+        private void TextBox_LastLevelHours_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_LastLevelHours.Text == "0")
+            {
+                TextBox_LastLevelHours.Clear();
+            }
+            TextBox_LastLevelHours.Focus();
+        }
+
+        private void TextBox_LastLevelHours_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_LastLevelHours.Text))
+            {
+                TextBox_LastLevelHours.Text = "0";
+            }
+            else
+            {
+                TextBox_LastLevelHours.Text = int.Parse(TextBox_LastLevelHours.Text).ToString();
+            }
+        }
+
+        private void TextBox_LastLevelMinutes_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_LastLevelMinutes.Text == "00")
+            {
+                TextBox_LastLevelMinutes.Clear();
+            }
+            TextBox_LastLevelMinutes.Focus();
+        }
+
+        private void TextBox_LastLevelMinutes_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_LastLevelMinutes.Text) || int.Parse(TextBox_LastLevelMinutes.Text) == 0)
+            {
+                TextBox_LastLevelMinutes.Text = "00";
+            }
+            else
+            {
+                TextBox_LastLevelMinutes.Text = int.Parse(TextBox_LastLevelMinutes.Text).ToString();
+            }
+
+            if (int.Parse(TextBox_LastLevelMinutes.Text) > 59)
+            {
+                TextBox_LastLevelMinutes.Text = "59";
+            }
+        }
+
+        private void TextBox_LastLevelSeconds_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_LastLevelSeconds.Text == "00")
+            {
+                TextBox_LastLevelSeconds.Clear();
+            }
+            TextBox_LastLevelSeconds.Focus();
+        }
+
+        private void TextBox_LastLevelSeconds_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_LastLevelSeconds.Text) || int.Parse(TextBox_LastLevelSeconds.Text) == 0)
+            {
+                TextBox_LastLevelSeconds.Text = "00";
+            }
+            else
+            {
+                TextBox_LastLevelSeconds.Text = int.Parse(TextBox_LastLevelSeconds.Text).ToString();
+            }
+
+            if (int.Parse(TextBox_LastLevelSeconds.Text) > 59)
+            {
+                TextBox_LastLevelSeconds.Text = "59";
+            }
+        }
+
+        private void TextBox_LastLevelMilliseconds_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_LastLevelMilliseconds.Text == "000")
+            {
+                TextBox_LastLevelMilliseconds.Clear();
+            }
+            TextBox_LastLevelMilliseconds.Focus();
+        }
+
+        private void TextBox_LastLevelMilliseconds_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_LastLevelMilliseconds.Text))
+            {
+                TextBox_LastLevelMilliseconds.Text = "000";
+            }
+            else
+            {
+                TextBox_LastLevelMilliseconds.Text = TextBox_LastLevelMilliseconds.Text.PadLeft(3, '0');
+            }
+        }
+
+        private void TextBox_TotalHours_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_TotalHours.Text == "0")
+            {
+                TextBox_TotalHours.Clear();
+            }
+            TextBox_TotalHours.Focus();
+        }
+
+        private void TextBox_TotalHours_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_TotalHours.Text))
+            {
+                TextBox_TotalHours.Text = "0";
+            }
+            else
+            {
+                TextBox_TotalHours.Text = int.Parse(TextBox_TotalHours.Text).ToString();
+            }
+        }
+
+        private void TextBox_TotalMinutes_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_TotalMinutes.Text == "00")
+            {
+                TextBox_TotalMinutes.Clear();
+            }
+            TextBox_TotalMinutes.Focus();
+        }
+
+        private void TextBox_TotalMinutes_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_TotalMinutes.Text) || int.Parse(TextBox_TotalMinutes.Text) == 0)
+            {
+                TextBox_TotalMinutes.Text = "00";
+            }
+            else
+            {
+                TextBox_TotalMinutes.Text = int.Parse(TextBox_TotalMinutes.Text).ToString();
+            }
+
+            if (int.Parse(TextBox_TotalMinutes.Text) > 59)
+            {
+                TextBox_TotalMinutes.Text = "59";
+            }
+        }
+
+        private void TextBox_TotalSeconds_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_TotalSeconds.Text == "00")
+            {
+                TextBox_TotalSeconds.Clear();
+            }
+            TextBox_TotalSeconds.Focus();
+        }
+
+        private void TextBox_TotalSeconds_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_TotalSeconds.Text) || int.Parse(TextBox_TotalSeconds.Text) == 0)
+            {
+                TextBox_TotalSeconds.Text = "00";
+            }
+            else
+            {
+                TextBox_TotalSeconds.Text = int.Parse(TextBox_TotalSeconds.Text).ToString();
+            }
+
+            if (int.Parse(TextBox_TotalSeconds.Text) > 59)
+            {
+                TextBox_TotalSeconds.Text = "59";
+            }
+        }
+
+        private void TextBox_TotalMilliseconds_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TextBox_TotalMilliseconds.Text == "000")
+            {
+                TextBox_TotalMilliseconds.Clear();
+            }
+            TextBox_TotalMilliseconds.Focus();
+        }
+
+        private void TextBox_TotalMilliseconds_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_TotalMilliseconds.Text))
+            {
+                TextBox_TotalMilliseconds.Text = "000";
+            }
+            else
+            {
+                TextBox_TotalMilliseconds.Text = TextBox_TotalMilliseconds.Text.PadLeft(3, '0');
             }
         }
     }
