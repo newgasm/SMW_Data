@@ -102,6 +102,7 @@ namespace SMW_Data.View
             }
             else
             {
+                // Do nothing
             }
         }
 
