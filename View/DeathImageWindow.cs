@@ -9,7 +9,6 @@ namespace SMW_Data.View
     public partial class DeathImageWindow : Window
     {
         public bool DeathImageOK { get; set; }
-        public ComboBoxItem selectedDeathImage;
         private readonly MainWindow mainWindow;
 
         public DeathImageWindow(MainWindow main)

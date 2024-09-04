@@ -19,6 +19,7 @@
     <None Remove="images\SMB3.png" />
     <None Remove="images\SMW.png" />
     <None Remove="Paper Mario.png" />
+    <None Remove="qusb2snesapp.json" />
     <None Remove="SMB1.png" />
     <None Remove="SMB2.png" />
     <None Remove="SMB3.png" />
@@ -26,7 +27,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="icon.ico" />
+    <Content Include="qusb2snesapp.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -55,12 +64,6 @@
     <Resource Include="images\SMW.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="qusb2snesapp.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>
