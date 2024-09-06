@@ -50,6 +50,14 @@
                     <MenuItem Header="Exit" Click="MenuItem_Click_Exit">
                     </MenuItem>
                 </MenuItem>
+                <MenuItem Grid.Row="1" Header="Save/Load" FontSize="16">
+                    <MenuItem Header="Save Data" Click="MenuItem_Click_Save">
+                    </MenuItem>
+                    <MenuItem Header="Load Data" Click="MenuItem_Click_Load">
+                    </MenuItem>
+                    <MenuItem Header="Clear Data" Click="MenuItem_Click_Clear">
+                    </MenuItem>
+                </MenuItem>
             </Menu>
         </Grid>
         <!--Main Window-->
@@ -98,6 +106,7 @@
             <TextBlock x:Name="TextBlock_SwitchCount" HorizontalAlignment="Left" Margin="132,32,0,0" TextWrapping="Wrap" Text="+0" VerticalAlignment="Top" Height="27" Width="51" FontSize="20" FontWeight="Bold" Foreground="White" TextAlignment="Right" Visibility="Visible" Grid.Row="1"/>
         </Grid>
         <Grid x:Name="GridData" Grid.Row="4" Background="#FF463F3F">
+            <!--Level Death Counts-->
             <TextBox x:Name="TextBox_LevelDeaths" HorizontalAlignment="Left" Margin="451,12,0,0" Text="0" VerticalAlignment="Top" Width="83" FontSize="14" Height="23" TextAlignment="Center" MaxLines="1" MaxLength="6" PreviewTextInput="TextBox_LevelDeaths_PreviewTextInput"/>
             <Button x:Name="Button_SetLevelDeaths" Content="   Set Level&#xA;Death Count" HorizontalAlignment="Left" Margin="541,12,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_SetLevel_Click" Width="92" Height="52"/>
             <Button x:Name="ButtonLevelPlus" Content="+" HorizontalAlignment="Left" Margin="482,41,0,0" VerticalAlignment="Top" Height="23" Width="22" FontSize="12" FontWeight="Bold" Click="ButtonLevelPlus_Click"/>
@@ -138,12 +147,13 @@
             <!--All Time-->
             <Button x:Name="Button_TimersSetAll" Content="Set&#xD;&#xA;All" HorizontalAlignment="Left" Margin="357,108,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="12" Click="Button_TimersSetAll_Click" Width="58" Height="38" FontStyle="Italic"/>
             <Button x:Name="Button_TimerResetAll" Content="Reset&#xD;&#xA;  All" HorizontalAlignment="Left" Margin="357,154,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="12" Click="Button_TimerResetAll_Click" Width="58" Height="38" FontStyle="Italic"/>
+            <CheckBox x:Name="CheckBox_StartTimerAutomatically" IsChecked="False" Content="Auto-Start Timer?" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="254,3,0,0" Foreground="White" FontSize="14" FontWeight="Bold" Checked="CheckBox_AutoStartTimer_Checked" Unchecked="CheckBox_AutoStartTimer_Unchecked"/>
             <!--Exit Counts-->
-            <CheckBox x:Name="CheckBox_ShowSwitchExits" IsChecked="False" Content="Show Switch Exits?" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="254,10,0,0" Foreground="White" FontSize="14" FontWeight="Bold" Checked="CheckBox_ShowSwitchExits_Checked" Unchecked="CheckBox_ShowSwitchExits_Unchecked"/>
-            <TextBox x:Name="TextBox_ExitCountTotal_Manual" HorizontalAlignment="Left" Margin="254,32,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="38" FontSize="14" Height="22" TextAlignment="Center" MaxLines="1" MaxLength="3"/>
-            <TextBox x:Name="TextBox_ExitCountCurrent_Manual" HorizontalAlignment="Left" Margin="254,61,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="38" FontSize="14" Height="22" TextAlignment="Center" MaxLines="1" MaxLength="3"/>
-            <Button x:Name="Button_SetTotalExits" Content="Set Total Exits" HorizontalAlignment="Left" Margin="297,32,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_SetTotalExits_Click" Width="118" Height="22"/>
-            <Button x:Name="Button_SetCurrentExits" Content="Set Current Exits" HorizontalAlignment="Left" Margin="297,61,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_SetCurrentExits_Click" Width="118" Height="22"/>
+            <CheckBox x:Name="CheckBox_ShowSwitchExits" IsChecked="False" Content="Show Switch Exits?" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="254,21,0,0" Foreground="White" FontSize="14" FontWeight="Bold" Checked="CheckBox_ShowSwitchExits_Checked" Unchecked="CheckBox_ShowSwitchExits_Unchecked"/>
+            <TextBox x:Name="TextBox_ExitCountTotal_Manual" HorizontalAlignment="Left" Margin="254,43,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="38" FontSize="14" Height="22" TextAlignment="Center" MaxLines="1" MaxLength="3"/>
+            <TextBox x:Name="TextBox_ExitCountCurrent_Manual" HorizontalAlignment="Left" Margin="254,72,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="38" FontSize="14" Height="22" TextAlignment="Center" MaxLines="1" MaxLength="3"/>
+            <Button x:Name="Button_SetTotalExits" Content="Set Total Exits" HorizontalAlignment="Left" Margin="297,43,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_SetTotalExits_Click" Width="118" Height="22"/>
+            <Button x:Name="Button_SetCurrentExits" Content="Set Current Exits" HorizontalAlignment="Left" Margin="297,72,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14" Click="Button_SetCurrentExits_Click" Width="118" Height="22"/>
             <!--Hack Data-->
             <Label x:Name="Label_HackName" Content="Hack Name" HorizontalAlignment="Left" Margin="14,199,0,0" VerticalAlignment="Top" FontSize="20" Height="52" Width="148" Foreground="White"/>
             <TextBox x:Name="TextBox_HackName" HorizontalAlignment="Left" Margin="17,235,0,0" Text="[Enter Hack Name Here]" VerticalAlignment="Top" Width="642" FontSize="20" Height="32" MaxLines="1" Foreground="DarkGray" GotFocus="TextBox_HackName_GotFocus"/>

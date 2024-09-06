@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -17,6 +18,23 @@ using System.Windows.Documents;
 
 namespace SMW_Data
 {
+    public class SaveData
+    {
+        public string saveData_LevelTime { get; set; }
+        public string saveData_LastLevelTime { get; set; }
+        public string saveData_TotalTime { get; set; }
+        public string saveData_HackName { get; set; }
+        public string saveData_LevelDeaths { get; set; }
+        public string saveData_TotalDeaths { get; set; }
+        public SolidColorBrush saveData_BackgroundColor { get; set; }
+        public SolidColorBrush saveData_TextColor { get; set; }
+        public int saveData_LevelTimerAccuracy { get; set; }
+        public int saveData_TotalTimerAccuracy { get; set; }
+        public int saveData_DeathImage { get; set; }
+        public FontFamily saveData_TitleFont { get; set; }
+        public FontFamily saveData_AuthorFont { get; set; }
+    }
+
     public partial class MainWindow : Window
     {
         public SolidColorBrush CurrentBackgroundColor { get; set; }
@@ -64,6 +82,8 @@ namespace SMW_Data
         private string formattedTotalTimeB;
         private string formattedLevelTimeA;
         private string formattedLevelTimeB;
+        private bool autostartTimer = false;
+
 
         static private string device = null;
         static private String[] devices = null;
@@ -449,6 +469,18 @@ namespace SMW_Data
                     RedSwitchActivated = false;
                 });
             }
+            else
+            {
+                if (autostartTimer == true)
+                {
+                    Application.Current.Dispatcher.BeginInvoke(() =>
+                    {
+                        StartTimer();
+                        autostartTimer = false;
+                        CheckBox_StartTimerAutomatically.IsChecked = false;
+                    });
+                }
+            }
         }
 
         private void CounterRange()
@@ -583,55 +615,7 @@ namespace SMW_Data
         {
             if (Button_TimersStartStop.Content.ToString().Contains("Start")) // start timer
             {
-                Button_TimersStartStop.Content = "Stop Timer";
-                SolidColorBrush redColor = new SolidColorBrush(Colors.Red);
-                Button_TimersStartStop.Background = redColor;
-
-                Button_TimerResetAll.Visibility = Visibility.Hidden;
-                Button_TimerResetLevel.Visibility = Visibility.Hidden;
-                Button_TimerResetLastLevel.Visibility = Visibility.Hidden;
-                Button_TimerResetTotal.Visibility = Visibility.Hidden;
-                Button_TimersSetAll.Visibility = Visibility.Hidden;
-                Button_TimersSetLevel.Visibility = Visibility.Hidden;
-                Button_TimersSetLastLevel.Visibility = Visibility.Hidden;
-                Button_TimersSetTotal.Visibility = Visibility.Hidden;
-                Label_TimeUnits.Visibility = Visibility.Hidden;
-                Label_Level.Visibility = Visibility.Hidden;
-                Label_LastLevel.Visibility = Visibility.Hidden;
-                Label_Total.Visibility = Visibility.Hidden;
-                TextBox_LevelHours.Visibility = Visibility.Hidden;
-                TextBox_LevelMinutes.Visibility = Visibility.Hidden;
-                TextBox_LevelSeconds.Visibility = Visibility.Hidden;
-                TextBox_LevelMilliseconds.Visibility = Visibility.Hidden;
-                TextBox_LastLevelHours.Visibility = Visibility.Hidden;
-                TextBox_LastLevelMinutes.Visibility = Visibility.Hidden;
-                TextBox_LastLevelSeconds.Visibility = Visibility.Hidden;
-                TextBox_LastLevelMilliseconds.Visibility = Visibility.Hidden;
-                TextBox_TotalHours.Visibility = Visibility.Hidden;
-                TextBox_TotalMinutes.Visibility = Visibility.Hidden;
-                TextBox_TotalSeconds.Visibility = Visibility.Hidden;
-                TextBox_TotalMilliseconds.Visibility = Visibility.Hidden;
-                
-                GetCurrentTimeTotal();
-                GetCurrentTimeLastLevel();
-                GetCurrentTimeLevel();
-
-                if (currentTimeTotal == TimeSpan.Zero)
-                {
-                    startTimeTotal = DateTime.Now;
-                    startTimeLevel = startTimeTotal;
-                    Button_TimerResetLastLevel_Click(this, new RoutedEventArgs());
-                }
-                else
-                {
-                    startTimeTotal = DateTime.Now - currentTimeTotal;
-                    startTimeLevel = DateTime.Now - currentTimeLevel;
-                }
-
-                timer = new DispatcherTimer();
-                timer.Interval = TimeSpan.FromMilliseconds(1);
-                timer.Tick += Timer_Main_Tick;
-                timer.Start();
+                StartTimer();
             }
             else //stop timer
             {
@@ -671,6 +655,59 @@ namespace SMW_Data
                 GetCurrentTimeLevel();
                 UpdateTimeFormats();
             }
+        }
+
+        private void StartTimer()
+        {
+            Button_TimersStartStop.Content = "Stop Timer";
+            SolidColorBrush redColor = new SolidColorBrush(Colors.Red);
+            Button_TimersStartStop.Background = redColor;
+
+            Button_TimerResetAll.Visibility = Visibility.Hidden;
+            Button_TimerResetLevel.Visibility = Visibility.Hidden;
+            Button_TimerResetLastLevel.Visibility = Visibility.Hidden;
+            Button_TimerResetTotal.Visibility = Visibility.Hidden;
+            Button_TimersSetAll.Visibility = Visibility.Hidden;
+            Button_TimersSetLevel.Visibility = Visibility.Hidden;
+            Button_TimersSetLastLevel.Visibility = Visibility.Hidden;
+            Button_TimersSetTotal.Visibility = Visibility.Hidden;
+            Label_TimeUnits.Visibility = Visibility.Hidden;
+            Label_Level.Visibility = Visibility.Hidden;
+            Label_LastLevel.Visibility = Visibility.Hidden;
+            Label_Total.Visibility = Visibility.Hidden;
+            TextBox_LevelHours.Visibility = Visibility.Hidden;
+            TextBox_LevelMinutes.Visibility = Visibility.Hidden;
+            TextBox_LevelSeconds.Visibility = Visibility.Hidden;
+            TextBox_LevelMilliseconds.Visibility = Visibility.Hidden;
+            TextBox_LastLevelHours.Visibility = Visibility.Hidden;
+            TextBox_LastLevelMinutes.Visibility = Visibility.Hidden;
+            TextBox_LastLevelSeconds.Visibility = Visibility.Hidden;
+            TextBox_LastLevelMilliseconds.Visibility = Visibility.Hidden;
+            TextBox_TotalHours.Visibility = Visibility.Hidden;
+            TextBox_TotalMinutes.Visibility = Visibility.Hidden;
+            TextBox_TotalSeconds.Visibility = Visibility.Hidden;
+            TextBox_TotalMilliseconds.Visibility = Visibility.Hidden;
+
+            GetCurrentTimeTotal();
+            GetCurrentTimeLastLevel();
+            GetCurrentTimeLevel();
+
+            if (currentTimeTotal == TimeSpan.Zero)
+            {
+                startTimeTotal = DateTime.Now;
+                startTimeLevel = startTimeTotal;
+                Button_TimerResetLastLevel_Click(this, new RoutedEventArgs());
+            }
+            else
+            {
+                startTimeTotal = DateTime.Now - currentTimeTotal;
+                startTimeLevel = DateTime.Now - currentTimeLevel;
+            }
+
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromMilliseconds(1);
+            timer.Tick += Timer_Main_Tick;
+            timer.Start();
         }
 
         private void Timer_Main_Tick(object sender, EventArgs e)
@@ -2820,6 +2857,206 @@ namespace SMW_Data
             {
                 TextBox_TotalMilliseconds.Text = TextBox_TotalMilliseconds.Text.PadLeft(3, '0');
             }
+        }
+
+        private void MenuItem_Click_Save(object sender, RoutedEventArgs e)
+        {
+            SaveData data = new SaveData
+            {
+                saveData_LevelTime = TextBlock_LevelTime.Text,
+                saveData_LastLevelTime = TextBlock_LastLevelTime.Text,
+                saveData_TotalTime = TextBlock_TotalTime.Text,
+                saveData_LevelTimerAccuracy = SelectedLevelAccuracyIndex,
+                saveData_TotalTimerAccuracy = SelectedTotalAccuracyIndex,
+                saveData_HackName = Label_Hack.Content.ToString(),
+                saveData_LevelDeaths = TextBlock_LevelDeathCount.Text,
+                saveData_TotalDeaths = TextBlock_TotalDeathCount.Text,
+                saveData_BackgroundColor = (SolidColorBrush)GridMain.Background,
+                saveData_TextColor = (SolidColorBrush)Label_LevelDeathCount.Foreground,
+                saveData_DeathImage = SelectedDeathImageIndex,
+                saveData_TitleFont = CurrentFontTitle,
+                saveData_AuthorFont = CurrentFontAuthor
+            };
+
+            string json = JsonConvert.SerializeObject(data, Formatting.Indented);
+            File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "savedata.json"), json);
+            MessageBox.Show("Data has been saved.");
+        }
+
+        private void MenuItem_Click_Load(object sender, RoutedEventArgs e)
+        {
+            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "savedata.json");
+
+            if (File.Exists(filePath))
+            {
+                LoadData();
+                MessageBox.Show("Saved data has been loaded.");
+            }
+            else
+            {
+                MessageBox.Show("No save data found.");
+            }
+        }
+
+        private void LoadData()
+        {
+            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "savedata.json");
+            string json = File.ReadAllText(filePath);
+            SaveData data = JsonConvert.DeserializeObject<SaveData>(json);
+
+            //Update Timers & Accuracy
+            TextBlock_LevelTime.Text = data.saveData_LevelTime;
+            TextBlock_LastLevelTime.Text = data.saveData_LastLevelTime;
+            TextBlock_TotalTime.Text = data.saveData_TotalTime;
+            SelectedLevelAccuracyIndex = data.saveData_LevelTimerAccuracy;
+            SelectedTotalAccuracyIndex = data.saveData_TotalTimerAccuracy;
+
+            switch (SelectedLevelAccuracyIndex)
+            {
+                case 0:
+                    LevelAccuracy = "Milliseconds (0.000)";
+                    break;
+                case 1:
+                    LevelAccuracy = "Milliseconds (0.00)";
+                    break;
+                case 2:
+                    LevelAccuracy = "Milliseconds (0.0)";
+                    break;
+                case 3:
+                    LevelAccuracy = "Seconds";
+                    break;
+            }
+
+            switch (SelectedTotalAccuracyIndex)
+            {
+                case 0:
+                    TotalAccuracy = "Milliseconds (0.000)";
+                    break;
+                case 1:
+                    TotalAccuracy = "Milliseconds (0.00)";
+                    break;
+                case 2:
+                    TotalAccuracy = "Milliseconds (0.0)";
+                    break;
+                case 3:
+                    TotalAccuracy = "Seconds";
+                    break;
+            }
+
+            GetCurrentTimeLevel();
+            GetCurrentTimeLastLevel();
+            GetCurrentTimeTotal();
+            UpdateTimeFormats();
+
+            //Update Hack Data
+            Label_Hack.Content = data.saveData_HackName;
+            TextBox_HackName.Text = data.saveData_HackName;
+            SMWCentralAPICall(data.saveData_HackName);
+            SMWCentralAPICall2(data.saveData_HackName);
+
+            //Update Death Counts
+            TextBlock_LevelDeathCount.Text = data.saveData_LevelDeaths;
+            TextBlock_TotalDeathCount.Text = data.saveData_TotalDeaths;
+
+            //Update Colors
+            GridMain.Background = data.saveData_BackgroundColor;
+            GridHackName.Background = data.saveData_BackgroundColor;
+            GridCreators.Background = data.saveData_BackgroundColor;
+            Label_Hack.Foreground = data.saveData_TextColor;
+            Label_Creator.Foreground = data.saveData_TextColor;
+            Label_LevelDeathCount.Foreground = data.saveData_TextColor;
+            Label_TotalDeathCount.Foreground = data.saveData_TextColor;
+            TextBlock_LevelDeathCount.Foreground = data.saveData_TextColor;
+            TextBlock_TotalDeathCount.Foreground = data.saveData_TextColor;
+            Label_ExitCount.Foreground = data.saveData_TextColor;
+            TextBlock_ExitCountCurrent.Foreground = data.saveData_TextColor;
+            TextBlock_ExitCountSlash.Foreground = data.saveData_TextColor;
+            TextBlock_ExitCountTotal.Foreground = data.saveData_TextColor;
+            TextBlock_SwitchCount.Foreground = data.saveData_TextColor;
+            Label_LevelTime.Foreground = data.saveData_TextColor;
+            Label_LastLevelTime.Foreground = data.saveData_TextColor;
+            Label_TotalTime.Foreground = data.saveData_TextColor;
+            TextBlock_LevelTime.Foreground = data.saveData_TextColor;
+            TextBlock_LastLevelTime.Foreground = data.saveData_TextColor;
+            TextBlock_TotalTime.Foreground = data.saveData_TextColor;
+            CurrentBackgroundColor = (SolidColorBrush)data.saveData_BackgroundColor;
+            CurrentTextColor = (SolidColorBrush)data.saveData_TextColor;
+
+            //Update Death Image
+            SelectedDeathImageIndex = data.saveData_DeathImage;
+            switch (SelectedDeathImageIndex)
+            {
+
+                case 0:
+                    NewDeathImage = new BitmapImage(new Uri("pack://application:,,,/images/SMB1.png"));
+                    break;
+                case 1:
+                    NewDeathImage = new BitmapImage(new Uri("pack://application:,,,/images/SMB3.png"));
+                    break;
+                case 2:
+                    NewDeathImage = new BitmapImage(new Uri("pack://application:,,,/images/SMW.png"));
+                    break;
+                case 3:
+                    NewDeathImage = new BitmapImage(new Uri("pack://application:,,,/images/Paper Mario.png"));
+                    break;
+            }
+            Image_MarioDeath1.Source = NewDeathImage;
+            Image_MarioDeath2.Source = NewDeathImage;
+
+            //Update Fonts
+            CurrentFontTitle = data.saveData_TitleFont;
+            CurrentFontAuthor = data.saveData_AuthorFont;
+            Label_Hack.FontFamily = CurrentFontTitle;
+            Label_Creator.FontFamily = CurrentFontAuthor;
+        }
+
+        private void MenuItem_Click_Clear(object sender, RoutedEventArgs e)
+        {
+            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "savedata.json");
+
+            if (File.Exists(filePath))
+            {
+                var defaultSaveData = new
+                {
+                    saveData_LevelTime = "0.00",
+                    saveData_LastLevelTime = "0.00",
+                    saveData_TotalTime = "0.00",
+                    saveData_HackName = "Hack Name",
+                    saveData_LevelDeaths = "0",
+                    saveData_TotalDeaths = "0",
+                    saveData_BackgroundColor = "#FF463F3F",
+                    saveData_TextColor = "#FFFFFFFF",
+                    saveData_LevelTimerAccuracy = 1,
+                    saveData_TotalTimerAccuracy = 1,
+                    saveData_DeathImage = 2,
+                    saveData_TitleFont = "Segoe UI",
+                    saveData_AuthorFont = "Segoe UI"
+                };
+
+                string json = JsonConvert.SerializeObject(defaultSaveData, Formatting.Indented);
+                File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "savedata.json"), json);
+                
+                LoadData();
+                TextBox_HackName.Text = "[Enter Hack Name Here]";
+                TextBox_HackName.Foreground = new SolidColorBrush(Colors.DarkGray);
+
+                MessageBox.Show("Save data has been cleared to default values.");
+            }
+            else
+            {
+                MessageBox.Show("No save data found.");
+            }
+        }
+
+        private void CheckBox_AutoStartTimer_Checked(object sender, RoutedEventArgs e)
+        {
+            autostartTimer = true;
+        }
+
+        private void CheckBox_AutoStartTimer_Unchecked(object sender, RoutedEventArgs e)
+        {
+            autostartTimer = false;
+
         }
     }
 }
