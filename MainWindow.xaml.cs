@@ -476,7 +476,6 @@ namespace SMW_Data
                     Application.Current.Dispatcher.BeginInvoke(() =>
                     {
                         StartTimer();
-                        autostartTimer = false;
                         CheckBox_StartTimerAutomatically.IsChecked = false;
                     });
                 }
